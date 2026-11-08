@@ -14,7 +14,7 @@ test('Phase 5 knowledge check records actual answers with confidence and survive
   await page.getByRole('combobox',{name:'Confidence rating'}).selectOption('5');
   await answerFoundation(page);
   await expect(page.getByText('3 / 3 correct')).toBeVisible();
-  await expect(page.getByText('confidence 5/5')).toBeVisible();
+  await expect(page.locator('.p5-result').getByText('confidence 5/5')).toBeVisible();
   await page.reload();
   await expect(page.locator('.p5-attempts')).toContainText('100%');
 });
