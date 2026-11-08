@@ -52,6 +52,11 @@ jobs:
             curl -fsS http://127.0.0.1:3005/v1/auth/me >/dev/null && break
             sleep 1
           done
+          echo "Verify test API is responding before browser testing"
+          curl --fail --silent --show-error http://127.0.0.1:3005/v1/auth/me
+      - name: Show backend test gateway errors on failure
+        if: failure()
+        run: cat /tmp/learning-os-phase6-gateway.log || true
       - run: npx playwright install --with-deps chromium
       - name: Desktop/mobile acceptance tests with real PostgreSQL
         run: npm run test:e2e
