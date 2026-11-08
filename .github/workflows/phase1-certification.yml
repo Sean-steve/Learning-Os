@@ -1,0 +1,45 @@
+name: Phase 1 UI Certification
+on:
+  push:
+    branches: [main, "phase/**"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui-certification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require imported frontend source
+        run: |
+          test -f apps/web/src/App.tsx || { echo "::error::Phase 1 source archive must be imported before certification"; exit 1; }
+          test -f apps/web/src/styles.css
+          test -f services/api/src/server.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install project dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate Phase 1 structure
+        run: npm run check:phase1
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Production build
+        run: npm run build
+      - name: Install Playwright runner and Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@^1.56.0
+          npx playwright install --with-deps chromium
+      - name: Browser acceptance tests
+        run: npx playwright test
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-os-phase1-ui-debug
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
