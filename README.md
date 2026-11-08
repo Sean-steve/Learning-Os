@@ -112,3 +112,17 @@ npm run build
 npm run dev
 # Optional private server: OPENAI_API_KEY=... bun services/api/src/server.ts
 ```
+
+## Phase 3 — Multimedia Studio
+
+The **Media Studio** (`/#studio`) combines YouTube video/playlist embeds, privacy-conscious local PDF rendering, local audio lessons, browser text-to-speech, and source-specific bookmarks. Position/progress synchronize across same-origin browser tabs using localStorage events. No media bytes, video watch-time, or bookmarks are synced to a server or other devices. YouTube video completion is manually checked. See [Phase 3 engineering notes](docs/PHASE-3-ENGINEERING.md).
+
+```bash
+npm ci
+npm run check:phase3
+npm run test:media
+npm run typecheck
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```

@@ -17,7 +17,9 @@
     "check:phase1": "node scripts/check-phase1.mjs",
     "test:e2e": "playwright test",
     "test:core": "node --experimental-strip-types --test tests/unit/*.test.mjs",
-    "check:phase2": "node scripts/check-phase2.mjs"
+    "check:phase2": "node scripts/check-phase2.mjs",
+    "check:phase3": "node scripts/check-phase3.mjs",
+    "test:media": "node --experimental-strip-types --test tests/unit/media-core.test.mjs"
   },
   "engines": {
     "node": ">=20"
