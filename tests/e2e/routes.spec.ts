@@ -48,3 +48,34 @@ test('capture visual certification evidence', async ({page}, testInfo) => {
     });
   }
 });
+
+test('knowledge library saves a new source across reload', async ({page}) => {
+  await page.goto('/#library');
+  await page.getByRole('button',{name:'Add learning source'}).click();
+  await page.getByPlaceholder('e.g. Dream awareness workshop').fill('Phase 1 QA source');
+  await page.getByPlaceholder('https://...').fill('https://example.com/lesson');
+  await page.getByRole('button',{name:/Save source/}).click();
+  await expect(page.getByText('Phase 1 QA source')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Phase 1 QA source')).toBeVisible();
+});
+
+test('practice journal saves a reflection across reload', async ({page}) => {
+  await page.goto('/#journal');
+  await page.getByPlaceholder('e.g. A vivid fragment from last night').fill('QA dream reflection');
+  await page.getByPlaceholder('Describe what happened, what you remembered, what you felt, or what you practiced...').fill('I remembered one detailed dream fragment.');
+  await page.getByRole('button',{name:/Save journal entry/}).click();
+  await expect(page.getByText('QA dream reflection')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('QA dream reflection')).toBeVisible();
+});
+
+test('audio-first preference persists across reload', async ({page}) => {
+  await page.goto('/#settings');
+  const toggle=page.getByRole('button',{name:'Toggle audio first'});
+  const before=await toggle.getAttribute('aria-pressed');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed',before==='true'?'false':'true');
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Toggle audio first'})).toHaveAttribute('aria-pressed',before==='true'?'false':'true');
+});
