@@ -75,6 +75,9 @@ export async function resumeCloud() {
     revisions=read(VERSIONS,{});hashes=read(HASHES,{});
     active=true;state={mode:'active',user,pending:0,conflicts:[],error:''};publish();
     await refreshRemote();
+    // Recover edits made during a temporary offline period or before authentication finished.
+    // Conflicting remote edits remain blocked for explicit human resolution.
+    for(const key of SYNC_KEYS){if(!conflicts.has(key))recordChanged(key);}
   }catch(e){state={...state,mode:'offline',error:'Backend unreachable. Changes remain in this browser.'};publish()}
 }
 export function isCloudActive(){return active;}
