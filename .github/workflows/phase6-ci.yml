@@ -1,0 +1,71 @@
+name: Learning OS — Phase 6 PostgreSQL Auth & Persistence
+on:
+  push:
+    branches: ["phase/6-postgresql-auth-durable-records"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  postgres-auth-and-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: los_ci
+          POSTGRES_PASSWORD: los_ci_private_test
+          POSTGRES_DB: learning_os_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U los_ci -d learning_os_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MIGRATION_DATABASE_URL: postgres://los_ci:los_ci_private_test@127.0.0.1:5432/learning_os_test
+      DATABASE_URL: postgres://los_app_ci:los_app_ci_test_only@127.0.0.1:5432/learning_os_test
+      WEB_ORIGIN: http://127.0.0.1:5173
+      API_HOST: 127.0.0.1
+      API_PORT: 3005
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Source, prior unit and auth cryptography tests
+        run: npm run check:phase1 && npm run check:phase2 && npm run check:phase3 && npm run check:phase4 && npm run check:phase5 && npm run check:phase6 && npm run test:core
+      - name: PostgreSQL schema and auth/tenant integration tests
+        run: npm run db:migrate && node scripts/provision-ci-role.mjs && npm run test:db
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Verify production Pages asset paths
+        run: GITHUB_PAGES=true npm run build && node scripts/check-pages.mjs
+      - name: Start test-only Node gateway for same Bun Fetch routes
+        run: |
+          node --experimental-strip-types services/api/src/phase6/node-test-server.ts >/tmp/learning-os-phase6-gateway.log 2>&1 &
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:3005/v1/auth/me >/dev/null && break
+            sleep 1
+          done
+          echo "Verify test API is responding before browser testing"
+          curl --fail --silent --show-error http://127.0.0.1:3005/v1/auth/me
+      - name: Show backend test gateway errors on failure
+        if: failure()
+        run: cat /tmp/learning-os-phase6-gateway.log || true
+      - run: npx playwright install --with-deps chromium
+      - name: Desktop/mobile acceptance tests with real PostgreSQL
+        run: npm run test:e2e
+      - name: Upload trace/screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase6-postgres-auth-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn

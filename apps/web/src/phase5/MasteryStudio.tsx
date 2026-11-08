@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import {recordChanged} from '../phase6/cloud-sync';
 import type { FormEvent } from 'react';
 import { ArrowRight, BarChart3, BookOpenCheck, BrainCircuit, CalendarDays, CheckCircle2, ClipboardCheck, Clock3, FileCheck2, Headphones, Lightbulb, LockKeyhole, NotebookPen, Plus, RefreshCw, ShieldCheck, Sparkles, Target, TrendingUp } from 'lucide-react';
 import { BANKS, DEFAULT_SKILLS, createCustomSkill, createEvidence, gradeAssessment, recommendNext, summarizeProgram, summarizeSkill } from '../../../../packages/mastery-core/src/index';
@@ -22,7 +23,8 @@ interface Props {
 const PREFIX='los.phase5.';
 function stored<T>(key:string,initial:T):[T,Setter<T>]{
   const [value,setValue]=useState<T>(()=>{try{const raw=localStorage.getItem(PREFIX+key);return raw?JSON.parse(raw) as T:initial}catch{return initial}});
-  useEffect(()=>{try{localStorage.setItem(PREFIX+key,JSON.stringify(value))}catch{/* browser storage may be blocked */}},[value,key]);
+  useEffect(()=>{try{localStorage.setItem(PREFIX+key,JSON.stringify(value));recordChanged(PREFIX+key)}catch{/* browser storage may be blocked */}},[value,key]);
+  useEffect(()=>{const hydrate=()=>{try{const raw=localStorage.getItem(PREFIX+key);setValue(raw===null?initial:JSON.parse(raw) as T)}catch{/* ignore */}};window.addEventListener('los:cloud-hydrate',hydrate);return()=>window.removeEventListener('los:cloud-hydrate',hydrate)},[key]);
   useEffect(()=>{const listener=(e:StorageEvent)=>{if(e.key!==PREFIX+key||!e.newValue)return;try{setValue(JSON.parse(e.newValue) as T)}catch{/* ignore malformed cross-tab values */}};window.addEventListener('storage',listener);return()=>window.removeEventListener('storage',listener)},[key]);
   return [value,setValue];
 }

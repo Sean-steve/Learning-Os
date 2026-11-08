@@ -156,3 +156,18 @@ npm run typecheck
 npm run build
 npm run test:e2e
 ```
+
+## Phase 6 — PostgreSQL, authentication and durable records
+
+Run with your existing **local PostgreSQL** and the **TypeScript/Bun** service. Login/register/7-day revocable sessions and versioned, tenant-scoped JSONB records persist the existing app state. The **Account & sync** route explicitly asks whether to import browser data or restore saved cloud records, and provides manual conflict resolution. No automatic first-time upload.
+
+```bash
+npm ci
+# Set DATABASE_URL, API_HOST and WEB_ORIGIN in the local environment
+npm run db:migrate
+npm run dev:api   # needs Bun; separate terminal
+npm run dev       # Vite frontend on localhost:5173
+# open http://localhost:5173/#account
+```
+
+GitHub Pages is still a **static, local-first preview**, not an API host. See [Phase 6 engineering and limitations](docs/PHASE-6-ENGINEERING.md).

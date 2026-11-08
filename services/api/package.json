@@ -1,1 +1,1 @@
-{"name":"@learning-os/api","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"bun --watch src/server.ts","start":"bun src/server.ts"}}
+{"name":"@learning-os/api","version":"0.6.0","private":true,"type":"module","scripts":{"migrate":"node --experimental-strip-types src/phase6/migrate.ts"},"dependencies":{"pg":"^8.16.3"},"devDependencies":{"@types/pg":"^8.15.5"}}

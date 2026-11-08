@@ -3,6 +3,8 @@ import { Phase2Knowledge, Phase2Planner, Phase2Programs, Phase2Curriculum } from
 import MediaStudio from './phase3/MediaStudio';
 import ScheduleCenter from './phase4/ScheduleCenter';
 import MasteryStudio from './phase5/MasteryStudio';
+import CloudAccount, {CloudBadge,CloudStartup} from './phase6/CloudAccount';
+import {recordChanged} from './phase6/cloud-sync';
 import type { LearningPlan, SourceAnalysis } from '../../../packages/learning-core/src/index';
 import type { CSSProperties, FormEvent, ReactNode, ChangeEvent } from 'react';
 import {
@@ -18,7 +20,7 @@ import {
 // Phase 1: UI-only local prototype. All saved data is browser-local, not synced to a backend.
 type Route = 'overview' | 'goals' | 'builder' | 'programs' | 'curriculum' | 'lesson' | 'library' |
   'studio' | 'audio' | 'reader' | 'calendar' | 'focus' | 'journal' | 'assessments' | 'analytics' |
-  'coach' | 'accountability' | 'integrations' | 'settings';
+  'coach' | 'accountability' | 'integrations' | 'settings' | 'account';
 type Mode = 'listen' | 'read' | 'watch' | 'practice';
 type SourceKind = 'video' | 'playlist' | 'pdf' | 'book' | 'audio' | 'website';
 type Source = { id: string; name: string; kind: SourceKind; url: string; source: string; status: string; length: string };
@@ -74,7 +76,8 @@ const QUIZ = [
 
 function useStored<T>(name:string, initial:T): [T, (val:T | ((prev:T)=>T))=>void] {
   const [state,setState]=useState<T>(()=>{try{const raw=localStorage.getItem(name);return raw?JSON.parse(raw) as T:initial;}catch{return initial;}});
-  useEffect(()=>{try{localStorage.setItem(name,JSON.stringify(state));}catch{/* private mode */}},[name,state]);
+  useEffect(()=>{try{localStorage.setItem(name,JSON.stringify(state));recordChanged(name);}catch{/* private mode */}},[name,state]);
+  useEffect(()=>{const hydrate=()=>{try{const raw=localStorage.getItem(name);setState(raw===null?initial:JSON.parse(raw) as T);}catch{/* keep current state */}};window.addEventListener('los:cloud-hydrate',hydrate);return()=>window.removeEventListener('los:cloud-hydrate',hydrate)},[name]);
   useEffect(()=>{const onStorage=(event:StorageEvent)=>{if(event.key!==name||!event.newValue)return;try{setState(JSON.parse(event.newValue) as T)}catch{/* ignore bad cross-tab updates */}};window.addEventListener('storage',onStorage);return()=>window.removeEventListener('storage',onStorage)},[name]);
   return [state,setState];
 }
@@ -89,16 +92,17 @@ function EmptyState({icon,heading,body,action}:{icon:ReactNode;heading:string;bo
 function Progress({value,variant='mint'}:{value:number;variant?:string}){return <div className="progress-track"><div className={`progress-value progress-${variant}`} style={{width:`${Math.max(0,Math.min(100,value))}%`}} /></div>}
 function Field({label,children,hint}:{label:string;children:ReactNode;hint?:string}){return <label className="field"><span className="field-label">{label}</span>{children}{hint&&<small>{hint}</small>}</label>}
 function App() {
-  const routes:Route[]=['overview','goals','builder','programs','curriculum','lesson','library','studio','audio','reader','calendar','focus','journal','assessments','analytics','coach','accountability','integrations','settings'];
+  const routes:Route[]=['overview','goals','builder','programs','curriculum','lesson','library','studio','audio','reader','calendar','focus','journal','assessments','analytics','coach','accountability','integrations','settings','account'];
   const getRoute=():Route=>{const q=location.hash.replace('#','') as Route;return routes.includes(q)?q:'overview'};
   const [route,setRoute]=useState<Route>(getRoute);
   const [menuOpen,setMenuOpen]=useState(false);
   const [searchOpen,setSearchOpen]=useState(false);
   const [noticesOpen,setNoticesOpen]=useState(false);
   const [toast,setToast]=useState('');
-  const [sources,setSources]=useStored<Source[]>('los.sources',INITIAL_SOURCES);
-  const [sessions,setSessions]=useStored<StudySession[]>('los.sessions',INITIAL_SESSIONS);
-  const [goals,setGoals]=useStored<Goal[]>('los.goals',INITIAL_GOALS);
+  const cloudBlank=localStorage.getItem('los.sync.emptyMode')==='1';
+  const [sources,setSources]=useStored<Source[]>('los.sources',cloudBlank?[]:INITIAL_SOURCES);
+  const [sessions,setSessions]=useStored<StudySession[]>('los.sessions',cloudBlank?[]:INITIAL_SESSIONS);
+  const [goals,setGoals]=useStored<Goal[]>('los.goals',cloudBlank?[]:INITIAL_GOALS);
   const [plans,setPlans]=useStored<LearningPlan[]>('los.phase2.plans',[]);
   const [analyses,setAnalyses]=useStored<SourceAnalysis[]>('los.phase2.analyses',[]);
   const [activePlanId,setActivePlanId]=useStored<string>('los.phase2.activePlan','');
@@ -125,9 +129,9 @@ function App() {
     {label:'WORKSPACE',items:[{id:'overview',label:'Overview',icon:<Home size={18}/>},{id:'goals',label:'My goals',icon:<Target size={18}/>},{id:'programs',label:'Learning programs',icon:<BookMarked size={18}/>},{id:'calendar',label:'Schedule',icon:<CalendarDays size={18}/>} ]},
     {label:'LEARN',items:[{id:'library',label:'Knowledge library',icon:<Library size={18}/>},{id:'studio',label:'Media studio',icon:<Youtube size={18}/>},{id:'audio',label:'Audio learning',icon:<Headphones size={18}/>},{id:'reader',label:'Reader',icon:<FileText size={18}/>},{id:'focus',label:'Focus studio',icon:<Focus size={18}/>}]},
     {label:'GROW',items:[{id:'journal',label:'Practice journal',icon:<NotebookPen size={18}/>},{id:'assessments',label:'Assessments',icon:<ClipboardCheck size={18}/>},{id:'analytics',label:'My progress',icon:<BarChart3 size={18}/>},{id:'coach',label:'Learning coach',icon:<BrainCircuit size={18}/>}]},
-    {label:'SYSTEM',items:[{id:'accountability',label:'Accountability',icon:<Bell size={18}/>},{id:'integrations',label:'Integrations',icon:<Compass size={18}/>},{id:'settings',label:'Settings',icon:<Settings2 size={18}/>}]}
+    {label:'SYSTEM',items:[{id:'accountability',label:'Accountability',icon:<Bell size={18}/>},{id:'integrations',label:'Integrations',icon:<Compass size={18}/>},{id:'settings',label:'Settings',icon:<Settings2 size={18}/>},{id:'account',label:'Account & sync',icon:<LockKeyhole size={18}/>}]}
   ];
-  const pageNames:Record<Route,string>={overview:'Overview',goals:'My Goals',builder:'AI Plan Builder',programs:'My Programs',curriculum:'Curriculum',lesson:'Lesson Studio',library:'Knowledge Library',studio:'Media Studio',audio:'Audio Learning',reader:'Reader',calendar:'My Schedule',focus:'Focus Studio',journal:'Practice Journal',assessments:'Assessments',analytics:'My Progress',coach:'AI Learning Coach',accountability:'Accountability',integrations:'Integrations',settings:'Settings'};
+  const pageNames:Record<Route,string>={overview:'Overview',goals:'My Goals',builder:'AI Plan Builder',programs:'My Programs',curriculum:'Curriculum',lesson:'Lesson Studio',library:'Knowledge Library',studio:'Media Studio',audio:'Audio Learning',reader:'Reader',calendar:'My Schedule',focus:'Focus Studio',journal:'Practice Journal',assessments:'Assessments',analytics:'My Progress',coach:'AI Learning Coach',accountability:'Accountability',integrations:'Integrations',settings:'Settings',account:'Account & Sync'};
   const content=()=>{switch(route){
     case 'overview':return <Overview {...shared} focusedMinutes={focusedMinutes} completedSessions={completedSessions}/>;
     case 'goals':return <Goals {...shared}/>;
@@ -148,8 +152,9 @@ function App() {
     case 'accountability':return <ScheduleCenter {...shared} view="accountability"/>;
     case 'integrations':return <Integrations {...shared}/>;
     case 'settings':return <Settings {...shared}/>;
+    case 'account':return <CloudAccount/>;
   }};
-  return <div className="app-shell">
+  return <div className="app-shell"><CloudStartup/>
     {menuOpen&&<div className="mobile-overlay" onClick={()=>setMenuOpen(false)}/>}
     <aside className={classNames('sidebar',menuOpen&&'sidebar-open')}>
       <button className="brand" onClick={()=>nav('overview')}><span className="brand-icon"><Activity size={24} strokeWidth={2.5}/></span><span><b>learning<span className="brand-os">OS</span></b><small>THE GROWTH WORKSPACE</small></span></button>
@@ -158,9 +163,9 @@ function App() {
       <div className="sidebar-bottom"><div className="sidebar-tip"><span className="tip-star"><Sparkles size={17}/></span><strong>Make learning stick.</strong><p>One focused day at a time. Your journey begins here.</p><button onClick={()=>nav('builder')}>Build a plan <ArrowRight size={14}/></button></div><div className="sidebar-person"><span className="person-avatar">{prefs.name.slice(0,1).toUpperCase()}</span><span><b>{prefs.name}</b><small>Personal account</small></span><button aria-label="Settings" onClick={()=>nav('settings')}><MoreHorizontal size={19}/></button></div></div>
     </aside>
     <main className="main-column">
-      <header className="topbar"><div className="topbar-start"><button className="icon-button mobile-toggle" aria-label="Open menu" onClick={()=>setMenuOpen(true)}><Menu size={21}/></button><div className="breadcrumbs"><span>Workspace</span><ChevronRight size={14}/><strong>{pageNames[route]}</strong></div></div><div className="topbar-actions"><button className="search-trigger" aria-label="Search your workspace" onClick={()=>setSearchOpen(true)}><Search size={17}/><span>Search your workspace</span><kbd>⌘ K</kbd></button><Badge tone="preview">● Preview data</Badge><button className="icon-button notice-button" aria-label="Notifications" onClick={()=>setNoticesOpen(!noticesOpen)}><Bell size={19}/><span className="notice-dot"/></button><button className="top-avatar" aria-label="Account settings" onClick={()=>nav('settings')}>{prefs.name.slice(0,1).toUpperCase()}</button></div>
+      <header className="topbar"><div className="topbar-start"><button className="icon-button mobile-toggle" aria-label="Open menu" onClick={()=>setMenuOpen(true)}><Menu size={21}/></button><div className="breadcrumbs"><span>Workspace</span><ChevronRight size={14}/><strong>{pageNames[route]}</strong></div></div><div className="topbar-actions"><button className="search-trigger" aria-label="Search your workspace" onClick={()=>setSearchOpen(true)}><Search size={17}/><span>Search your workspace</span><kbd>⌘ K</kbd></button><CloudBadge open={()=>nav('account')}/><button className="icon-button notice-button" aria-label="Notifications" onClick={()=>setNoticesOpen(!noticesOpen)}><Bell size={19}/><span className="notice-dot"/></button><button className="top-avatar" aria-label="Account & sync" onClick={()=>nav('account')}>{prefs.name.slice(0,1).toUpperCase()}</button></div>
       {noticesOpen&&<div className="notice-menu"><div className="notice-menu-head"><strong>Notifications</strong><button className="text-button" onClick={()=>setNoticesOpen(false)}>Close</button></div>{notices.map((n,i)=><div className="notice-row" key={i}><span className={`notice-mark ${n.color}`}/><div><b>{n.title}</b><p>{n.text}</p></div></div>)}</div>}</header>
-      <div className="page-container">{content()}<footer className="footer-bar"><span>Learning OS · Phase 5 evidence-aware learning preview</span><span><ShieldCheck size={14}/> Browser-local preview · No live AI or backend sync</span></footer></div>
+      <div className="page-container">{content()}<footer className="footer-bar"><span>Learning OS · Phase 6 PostgreSQL sync preview</span><span><ShieldCheck size={14}/> Browser-local cache by default · PostgreSQL sync on local installation</span></footer></div>
     </main>
     {searchOpen&&<SearchPalette close={()=>setSearchOpen(false)} nav={nav} navGroups={navGroups} sources={sources}/>}
     {toast&&<div className="toast"><CheckCircle2 size={18}/>{toast}</div>}
