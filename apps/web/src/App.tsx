@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Phase2Knowledge, Phase2Planner, Phase2Programs, Phase2Curriculum } from './phase2/Phase2Studio';
+import MediaStudio from './phase3/MediaStudio';
 import type { LearningPlan, SourceAnalysis } from '../../../packages/learning-core/src/index';
 import type { CSSProperties, FormEvent, ReactNode, ChangeEvent } from 'react';
 import {
@@ -14,7 +15,7 @@ import {
 
 // Phase 1: UI-only local prototype. All saved data is browser-local, not synced to a backend.
 type Route = 'overview' | 'goals' | 'builder' | 'programs' | 'curriculum' | 'lesson' | 'library' |
-  'audio' | 'reader' | 'calendar' | 'focus' | 'journal' | 'assessments' | 'analytics' |
+  'studio' | 'audio' | 'reader' | 'calendar' | 'focus' | 'journal' | 'assessments' | 'analytics' |
   'coach' | 'accountability' | 'integrations' | 'settings';
 type Mode = 'listen' | 'read' | 'watch' | 'practice';
 type SourceKind = 'video' | 'playlist' | 'pdf' | 'book' | 'audio' | 'website';
@@ -85,7 +86,7 @@ function EmptyState({icon,heading,body,action}:{icon:ReactNode;heading:string;bo
 function Progress({value,variant='mint'}:{value:number;variant?:string}){return <div className="progress-track"><div className={`progress-value progress-${variant}`} style={{width:`${Math.max(0,Math.min(100,value))}%`}} /></div>}
 function Field({label,children,hint}:{label:string;children:ReactNode;hint?:string}){return <label className="field"><span className="field-label">{label}</span>{children}{hint&&<small>{hint}</small>}</label>}
 function App() {
-  const routes:Route[]=['overview','goals','builder','programs','curriculum','lesson','library','audio','reader','calendar','focus','journal','assessments','analytics','coach','accountability','integrations','settings'];
+  const routes:Route[]=['overview','goals','builder','programs','curriculum','lesson','library','studio','audio','reader','calendar','focus','journal','assessments','analytics','coach','accountability','integrations','settings'];
   const getRoute=():Route=>{const q=location.hash.replace('#','') as Route;return routes.includes(q)?q:'overview'};
   const [route,setRoute]=useState<Route>(getRoute);
   const [menuOpen,setMenuOpen]=useState(false);
@@ -119,11 +120,11 @@ function App() {
   const shared={nav,sources,setSources,sessions,setSessions,goals,setGoals,plans,setPlans,analyses,setAnalyses,activePlanId,setActivePlanId,completed,toggle,journal,setJournal,notes,setNotes,prefs,setPrefs,readerFile,setReaderFile,readerName,setReaderName,notify};
   const navGroups:{label:string;items:{id:Route;label:string;icon:ReactNode}[]}[]=[
     {label:'WORKSPACE',items:[{id:'overview',label:'Overview',icon:<Home size={18}/>},{id:'goals',label:'My goals',icon:<Target size={18}/>},{id:'programs',label:'Learning programs',icon:<BookMarked size={18}/>},{id:'calendar',label:'Schedule',icon:<CalendarDays size={18}/>} ]},
-    {label:'LEARN',items:[{id:'library',label:'Knowledge library',icon:<Library size={18}/>},{id:'audio',label:'Audio learning',icon:<Headphones size={18}/>},{id:'reader',label:'Reader',icon:<FileText size={18}/>},{id:'focus',label:'Focus studio',icon:<Focus size={18}/>}]},
+    {label:'LEARN',items:[{id:'library',label:'Knowledge library',icon:<Library size={18}/>},{id:'studio',label:'Media studio',icon:<Youtube size={18}/>},{id:'audio',label:'Audio learning',icon:<Headphones size={18}/>},{id:'reader',label:'Reader',icon:<FileText size={18}/>},{id:'focus',label:'Focus studio',icon:<Focus size={18}/>}]},
     {label:'GROW',items:[{id:'journal',label:'Practice journal',icon:<NotebookPen size={18}/>},{id:'assessments',label:'Assessments',icon:<ClipboardCheck size={18}/>},{id:'analytics',label:'My progress',icon:<BarChart3 size={18}/>},{id:'coach',label:'Learning coach',icon:<BrainCircuit size={18}/>}]},
     {label:'SYSTEM',items:[{id:'accountability',label:'Accountability',icon:<Bell size={18}/>},{id:'integrations',label:'Integrations',icon:<Compass size={18}/>},{id:'settings',label:'Settings',icon:<Settings2 size={18}/>}]}
   ];
-  const pageNames:Record<Route,string>={overview:'Overview',goals:'My Goals',builder:'AI Plan Builder',programs:'My Programs',curriculum:'Curriculum',lesson:'Lesson Studio',library:'Knowledge Library',audio:'Audio Learning',reader:'Reader',calendar:'My Schedule',focus:'Focus Studio',journal:'Practice Journal',assessments:'Assessments',analytics:'My Progress',coach:'AI Learning Coach',accountability:'Accountability',integrations:'Integrations',settings:'Settings'};
+  const pageNames:Record<Route,string>={overview:'Overview',goals:'My Goals',builder:'AI Plan Builder',programs:'My Programs',curriculum:'Curriculum',lesson:'Lesson Studio',library:'Knowledge Library',studio:'Media Studio',audio:'Audio Learning',reader:'Reader',calendar:'My Schedule',focus:'Focus Studio',journal:'Practice Journal',assessments:'Assessments',analytics:'My Progress',coach:'AI Learning Coach',accountability:'Accountability',integrations:'Integrations',settings:'Settings'};
   const content=()=>{switch(route){
     case 'overview':return <Overview {...shared} focusedMinutes={focusedMinutes} completedSessions={completedSessions}/>;
     case 'goals':return <Goals {...shared}/>;
@@ -132,6 +133,7 @@ function App() {
     case 'curriculum':return <Phase2Curriculum {...shared}/>;
     case 'lesson':return <Lesson {...shared}/>;
     case 'library':return <Phase2Knowledge {...shared}/>;
+    case 'studio':return <MediaStudio sources={sources} notify={notify}/>;
     case 'audio':return <Audio {...shared}/>;
     case 'reader':return <Reader {...shared}/>;
     case 'calendar':return <Calendar {...shared}/>;
@@ -155,7 +157,7 @@ function App() {
     <main className="main-column">
       <header className="topbar"><div className="topbar-start"><button className="icon-button mobile-toggle" aria-label="Open menu" onClick={()=>setMenuOpen(true)}><Menu size={21}/></button><div className="breadcrumbs"><span>Workspace</span><ChevronRight size={14}/><strong>{pageNames[route]}</strong></div></div><div className="topbar-actions"><button className="search-trigger" aria-label="Search your workspace" onClick={()=>setSearchOpen(true)}><Search size={17}/><span>Search your workspace</span><kbd>⌘ K</kbd></button><Badge tone="preview">● Preview data</Badge><button className="icon-button notice-button" aria-label="Notifications" onClick={()=>setNoticesOpen(!noticesOpen)}><Bell size={19}/><span className="notice-dot"/></button><button className="top-avatar" aria-label="Account settings" onClick={()=>nav('settings')}>{prefs.name.slice(0,1).toUpperCase()}</button></div>
       {noticesOpen&&<div className="notice-menu"><div className="notice-menu-head"><strong>Notifications</strong><button className="text-button" onClick={()=>setNoticesOpen(false)}>Close</button></div>{notices.map((n,i)=><div className="notice-row" key={i}><span className={`notice-mark ${n.color}`}/><div><b>{n.title}</b><p>{n.text}</p></div></div>)}</div>}</header>
-      <div className="page-container">{content()}<footer className="footer-bar"><span>Learning OS · Phase 1 prototype</span><span><ShieldCheck size={14}/> Browser-local preview · No live AI or backend sync</span></footer></div>
+      <div className="page-container">{content()}<footer className="footer-bar"><span>Learning OS · Phase 3 multimedia preview</span><span><ShieldCheck size={14}/> Browser-local preview · No live AI or backend sync</span></footer></div>
     </main>
     {searchOpen&&<SearchPalette close={()=>setSearchOpen(false)} nav={nav} navGroups={navGroups} sources={sources}/>}
     {toast&&<div className="toast"><CheckCircle2 size={18}/>{toast}</div>}

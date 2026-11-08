@@ -1,0 +1,35 @@
+name: Learning OS — Phase 3 Multimedia
+on:
+  push:
+    branches: ["phase/3-multimedia-learning-experience"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  multimedia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Structural checks and all unit tests
+        run: npm run check:phase1 && npm run check:phase2 && npm run check:phase3 && npm run test:core
+      - run: npm run typecheck
+      - run: npm run build
+      - run: GITHUB_PAGES=true npm run build && node scripts/check-pages.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-os-phase3-ui-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
