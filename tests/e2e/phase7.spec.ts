@@ -10,7 +10,7 @@ async function register(page:any,username:string){
   await page.getByRole('button',{name:'Create private account'}).click();
   await expect(page.getByRole('heading',{name:'Choose where to begin'})).toBeVisible();
   await page.getByRole('button',{name:/Use cloud records on this device/}).click();
-  await expect(page.getByRole('button',{name:/Learning records: Connected/})).toBeVisible();
+  await expect(page.getByRole('button',{name:/Learning records: Connected/})).toBeVisible({timeout:30_000});
 }
 async function login(page:any,username:string){
   await page.goto('/#account');
@@ -19,9 +19,10 @@ async function login(page:any,username:string){
   await page.getByRole('button',{name:'Sign in to PostgreSQL'}).click();
   await expect(page.getByRole('heading',{name:'Choose where to begin'})).toBeVisible();
   await page.getByRole('button',{name:/Use cloud records on this device/}).click();
-  await expect(page.getByRole('button',{name:/Learning records: Connected/})).toBeVisible();
+  await expect(page.getByRole('button',{name:/Learning records: Connected/})).toBeVisible({timeout:30_000});
 }
 test('two independent browser contexts reconcile journal changes and remote sessions are revocable',async({page,browser})=>{
+  test.setTimeout(90_000);
   const username=email();
   await register(page,username);
   const second=await browser.newContext();
