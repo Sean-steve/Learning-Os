@@ -141,3 +141,18 @@ npm run typecheck
 npm run build
 npm run dev
 ```
+
+## Phase 5 — Evidence-based assessment, progress, mastery and adaptive coaching
+
+The existing **Assessments**, **Progress & analytics** and **Learning coach** routes now use a shared evidence ledger. Assessments save actual graded answers and confidence; repeat passes on separate days are required for the knowledge gate; practice records are explicitly self-reported; independent verification is **not** offered. Progress analytics reflect only recorded completions. The offline coach recommends short, sleep-safe learning actions and requires manual approval before adding a local session. Optional private AI explanations are only available against a separately configured local Bun server and send numeric aggregate data.
+
+Review [Phase 5 engineering and limitations](docs/PHASE-5-ENGINEERING.md).
+
+```bash
+npm ci
+npm run check:phase5
+npm run test:core
+npm run typecheck
+npm run build
+npm run test:e2e
+```
