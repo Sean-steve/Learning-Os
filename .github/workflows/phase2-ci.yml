@@ -1,0 +1,35 @@
+name: Learning OS — Phase 2 Curriculum and Knowledge
+on:
+  push:
+    branches: ["phase/2-ai-knowledge-planning-pages"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  learning-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run check:phase1 && npm run check:phase2 && npm run test:core
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Validate Bun API TypeScript source
+        run: node scripts/check-api-source.mjs
+      - run: GITHUB_PAGES=true npm run build && node scripts/check-pages.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Save test screenshots and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-os-phase2-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
