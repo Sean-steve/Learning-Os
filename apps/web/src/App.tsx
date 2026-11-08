@@ -92,7 +92,7 @@ function EmptyState({icon,heading,body,action}:{icon:ReactNode;heading:string;bo
 function Progress({value,variant='mint'}:{value:number;variant?:string}){return <div className="progress-track"><div className={`progress-value progress-${variant}`} style={{width:`${Math.max(0,Math.min(100,value))}%`}} /></div>}
 function Field({label,children,hint}:{label:string;children:ReactNode;hint?:string}){return <label className="field"><span className="field-label">{label}</span>{children}{hint&&<small>{hint}</small>}</label>}
 function App() {
-  const routes:Route[]=['overview','goals','builder','programs','curriculum','lesson','library','studio','audio','reader','calendar','focus','journal','assessments','analytics','coach','accountability','integrations','settings'];
+  const routes:Route[]=['overview','goals','builder','programs','curriculum','lesson','library','studio','audio','reader','calendar','focus','journal','assessments','analytics','coach','accountability','integrations','settings','account'];
   const getRoute=():Route=>{const q=location.hash.replace('#','') as Route;return routes.includes(q)?q:'overview'};
   const [route,setRoute]=useState<Route>(getRoute);
   const [menuOpen,setMenuOpen]=useState(false);
