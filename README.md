@@ -177,3 +177,7 @@ GitHub Pages is still a **static, local-first preview**, not an API host. See [P
 PostgreSQL sessions can now be reviewed, other devices revoked, and passwords rotated. When a locally authenticated account is active, the UI checks for remote changes every 15 seconds while visible and on focus/online. Conflicting revisions are never silently overwritten. A separate local HTTPS deployment with `VITE_LEARNING_API_ENABLED=true` may enable these features outside localhost; **GitHub Pages remains static preview only**. See [Phase 7 Runbook](docs/PHASE-7-ENGINEERING.md).
 
 **Production remains blocked** until a real host, TLS, secure identity recovery and MFA, tested encrypted off-site backups/restore, operational monitoring and external security/privacy validation are complete.
+
+## Phase 7.1 — Live infrastructure & production identity hardening
+
+MFA enrolment, time-based authenticator verification, one-time recovery codes and DB-backed login throttling are implemented locally. A production HTTPS deployment still needs a provisioned host, real transactional email verification/recovery, monitoring, encrypted off-host backups and operational/security evidence. GitHub Pages is a static preview only. See [Phase 7.1 release gate](docs/PHASE-7.1-RELEASE.md).

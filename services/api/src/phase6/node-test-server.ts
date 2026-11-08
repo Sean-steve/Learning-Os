@@ -14,7 +14,11 @@ const server=createServer(async(req,res)=>{
   try{
     const response=await phase6Route(new Request(url,{method:req.method,headers:req.headers as HeadersInit,...(req.method==='GET'||req.method==='HEAD'?{}:{body})}),{db:pool,origin,secure:false,ip:req.socket.remoteAddress||'local'});
     res.statusCode=response.status;
-    response.headers.forEach((v,k)=>res.setHeader(k,v));
+    // Fetch Headers may contain multiple Set-Cookie fields. Preserve them separately
+    // through the test-only Node adapter, matching Bun's browser behavior.
+    response.headers.forEach((v,k)=>{if(k.toLowerCase()!=='set-cookie')res.setHeader(k,v)});
+    const cookies=response.headers.getSetCookie();
+    if(cookies.length)res.setHeader('Set-Cookie',cookies);
     res.end(Buffer.from(await response.arrayBuffer()));
   }catch(e){console.error('Phase 6 test gateway failed:',e);res.statusCode=503;res.end(JSON.stringify({error:'test_gateway_unavailable'}));}
 });

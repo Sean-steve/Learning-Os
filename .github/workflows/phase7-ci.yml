@@ -59,7 +59,7 @@ jobs:
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Desktop/mobile complete browser suite including two devices
-        run: npx playwright test --workers=1
+        run: npx playwright test tests/e2e/screens.spec.ts tests/e2e/multimedia.spec.ts tests/e2e/phase4.spec.ts tests/e2e/phase5.spec.ts tests/e2e/phase6.spec.ts tests/e2e/phase7.spec.ts --workers=1
       - name: Show test API failure context
         if: failure()
         run: cat /tmp/los-phase7-gateway.log || true
