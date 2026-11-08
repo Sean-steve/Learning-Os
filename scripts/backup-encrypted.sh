@@ -12,7 +12,8 @@ name="learning-os-$(date -u +%Y%m%dT%H%M%SZ).dump.age"
 target="$BACKUP_DIR/$name"
 tmp="$(mktemp "$BACKUP_DIR/.backup.XXXXXXXX")"
 trap 'rm -f "$tmp"' EXIT
-pg_dump --dbname="$DATABASE_URL" --format=custom --no-owner --no-acl | age -r "$AGE_RECIPIENT" -o "$tmp"
+if [[ -e "$target" ]]; then echo "Backup already exists: $target" >&2; exit 2; fi
+pg_dump --dbname="$DATABASE_URL" --format=custom --no-owner --no-acl | age -r "$AGE_RECIPIENT" > "$tmp"
 test -s "$tmp"
 mv -n "$tmp" "$target"
 echo "Encrypted backup created: $target"
