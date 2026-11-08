@@ -1,0 +1,29 @@
+# Example systemd unit; paths, user and DB credential env must be provisioned
+# by the operator. /etc/learning-os/api.env must be owner-only (0600).
+[Unit]
+Description=Learning OS private TypeScript/Bun API
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=learningos
+Group=learningos
+WorkingDirectory=/srv/learning-os
+EnvironmentFile=/etc/learning-os/api.env
+ExecStart=/usr/local/bin/bun services/api/src/server.ts
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ReadWritePaths=/var/log/learning-os
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+UMask=0077
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
