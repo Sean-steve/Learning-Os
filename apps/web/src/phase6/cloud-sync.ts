@@ -1,7 +1,9 @@
 import { SYNC_KEYS } from '../../../../packages/sync-contract/src/index';
 import type { CloudUser, CloudRecord, CloudState, SyncKey } from '../../../../packages/sync-contract/src/index';
 /** The Pages preview has no backend. Local development uses Vite's same-origin /api proxy. */
-export const cloudAvailable = () => ['localhost','127.0.0.1'].includes(location.hostname);
+export const cloudAvailable = () =>
+  ['localhost','127.0.0.1'].includes(location.hostname) ||
+  (import.meta.env.VITE_LEARNING_API_ENABLED === 'true' && location.protocol === 'https:' && !location.hostname.endsWith('.github.io'));
 const ORIGIN = '/api/v1';
 const OWNER='los.sync.owner', ENABLED='los.sync.enabled', VERSIONS='los.sync.versions', HASHES='los.sync.hashes';
 const KEYS = new Set<string>(SYNC_KEYS);
@@ -18,6 +20,18 @@ async function api(path:string,init?:RequestInit){const res=await fetch(ORIGIN+p
 export async function authMe():Promise<CloudUser|null>{if(!cloudAvailable())return null;const a=await api('/auth/me');return a.user||null}
 export async function createAccount(email:string,password:string,mode:'login'|'register'){const body=await api('/auth/'+mode,{method:'POST',body:JSON.stringify({email,password})}); state={...state,mode:'preview',user:body.user,error:''};publish();return body.user as CloudUser;}
 export async function cloudRecords():Promise<CloudRecord[]>{const r=await api('/records');return r.records as CloudRecord[];}
+export type AccountSession={id:string;createdAt:string;expiresAt:string;current:boolean};
+export async function listAccountSessions():Promise<AccountSession[]>{
+  const response=await api('/auth/sessions');return response.sessions as AccountSession[];
+}
+export async function revokeOtherSessions():Promise<number>{
+  const response=await api('/auth/revoke-others',{method:'POST',body:'{}'});
+  return Number(response.revoked||0);
+}
+export async function rotatePassword(currentPassword:string,newPassword:string):Promise<number>{
+  const response=await api('/auth/change-password',{method:'POST',body:JSON.stringify({currentPassword,newPassword})});
+  return Number(response.revoked||0);
+}
 function persistMeta(){try{localStorage.setItem(VERSIONS,JSON.stringify(revisions));localStorage.setItem(HASHES,JSON.stringify(hashes))}catch{/* storage unavailable */}}
 function hydrate(records:CloudRecord[]){
   for(const key of SYNC_KEYS)localStorage.removeItem(key);
@@ -125,4 +139,44 @@ export async function resolveConflict(key:string,action:'keep-local'|'use-remote
       revisions[key]=saved.record.revision;hashes[key]=checksum(raw);}
   }
   conflicts.delete(key);state={...state,mode:conflicts.size?'conflict':'active',error:''};persistMeta();publish();
+}
+
+/** Same-origin reconciliation only. No background service worker or server polling on GitHub Pages. */
+let checking:Promise<void>|null=null;
+export function refreshCloud():Promise<void>{
+  if(checking)return checking;
+  checking=(async()=>{
+    if(!active||!state.user)return;
+    try{
+      await refreshRemote();
+      for(const key of SYNC_KEYS)if(!conflicts.has(key))recordChanged(key);
+      if(pending.size)await flushCloud();
+      if(conflicts.size)state={...state,mode:'conflict'};
+      else if(!pending.size)state={...state,mode:'active',error:''};
+      publish();
+    }catch{
+      state={...state,mode:'offline',error:'Remote update check failed. Edits remain in this browser.'};
+      publish();
+    }
+  })();
+  return checking.finally(()=>{checking=null;});
+}
+export function startCloudReconciliation():()=>void{
+  if(!cloudAvailable())return ()=>{};
+  const check=()=>{if(document.visibilityState==='visible' && navigator.onLine)void refreshCloud();};
+  const onStorage=(event:StorageEvent)=>{
+    if(event.key && KEYS.has(event.key) && active)recordChanged(event.key);
+  };
+  const interval=window.setInterval(check,15_000);
+  document.addEventListener('visibilitychange',check);
+  window.addEventListener('online',check);
+  window.addEventListener('focus',check);
+  window.addEventListener('storage',onStorage);
+  return ()=>{
+    window.clearInterval(interval);
+    document.removeEventListener('visibilitychange',check);
+    window.removeEventListener('online',check);
+    window.removeEventListener('focus',check);
+    window.removeEventListener('storage',onStorage);
+  };
 }
