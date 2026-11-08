@@ -1,0 +1,73 @@
+name: Learning OS — Phase 7.1 Identity, PostgreSQL and Release Gates
+on:
+  push:
+    branches: ["phase/7.1-live-infrastructure-identity-hardening"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  postgres-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: los_ci
+          POSTGRES_PASSWORD: los_ci_private_test
+          POSTGRES_DB: learning_os_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U los_ci -d learning_os_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: true
+      MFA_ENCRYPTION_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
+      MIGRATION_DATABASE_URL: postgres://los_ci:los_ci_private_test@127.0.0.1:5432/learning_os_test
+      DATABASE_URL: postgres://los_app_ci:los_app_ci_test_only@127.0.0.1:5432/learning_os_test
+      WEB_ORIGIN: http://127.0.0.1:5173
+      API_HOST: 127.0.0.1
+      API_PORT: 3005
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Source, cryptography and release-block gates
+        run: |
+          npm run check:phase7 && npm run check:phase71
+          node scripts/check-release-evidence.mjs --expect-blocked
+          npm run test:core
+      - name: TypeScript and static Pages build
+        run: npm run typecheck && npm run build && GITHUB_PAGES=true npm run build && node scripts/check-pages.mjs
+      - name: Database migration, restricted app role, auth and MFA
+        run: npm run db:migrate && node scripts/provision-ci-role.mjs && npm run test:db
+      - name: Start private Fetch gateway
+        run: |
+          node --experimental-strip-types services/api/src/phase6/node-test-server.ts >/tmp/los71-gateway.log 2>&1 &
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:3005/v1/auth/me >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3005/v1/auth/me
+      - run: npx playwright install --with-deps chromium
+      - name: MFA browser acceptance and existing authenticated workflows
+        run: npx playwright test tests/e2e/phase6.spec.ts tests/e2e/phase7.spec.ts tests/e2e/phase71.spec.ts --workers=1
+      - name: Show test failure diagnostics
+        if: failure()
+        run: cat /tmp/los71-gateway.log || true
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-os-phase71-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn

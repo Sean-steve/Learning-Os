@@ -1,0 +1,18 @@
+{
+  "application": "Learning OS",
+  "release": "7.1",
+  "environment": "unprovisioned",
+  "ownerApproval": false,
+  "gates": {
+    "dnsAndHttps": {"status":"missing","evidence":""},
+    "hostAndRuntime": {"status":"missing","evidence":""},
+    "postgresLeastPrivilege": {"status":"missing","evidence":""},
+    "mfaAndIdentityRecovery": {"status":"missing","evidence":""},
+    "emailVerificationAndReset": {"status":"missing","evidence":""},
+    "privacyDeletionAndConsent": {"status":"missing","evidence":""},
+    "offHostBackupAndRestore": {"status":"missing","evidence":""},
+    "monitoringAndIncidentResponse": {"status":"missing","evidence":""},
+    "remoteTwoDeviceCertification": {"status":"missing","evidence":""},
+    "securityReview": {"status":"missing","evidence":""}
+  }
+}
