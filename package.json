@@ -20,7 +20,8 @@
     "check:phase2": "node scripts/check-phase2.mjs",
     "check:phase3": "node scripts/check-phase3.mjs",
     "test:media": "node --experimental-strip-types --test tests/unit/media-core.test.mjs",
-    "check:phase4": "node scripts/check-phase4.mjs"
+    "check:phase4": "node scripts/check-phase4.mjs",
+    "check:phase5": "node scripts/check-phase5.mjs"
   },
   "engines": {
     "node": ">=20"

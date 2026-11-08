@@ -21,7 +21,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm run check:phase1 && npm run check:phase2 && npm run check:phase3 && npm run check:phase4 && npm run test:core && npm run typecheck
+      - run: npm run check:phase1 && npm run check:phase2 && npm run check:phase3 && npm run check:phase4 && npm run check:phase5 && npm run test:core && npm run typecheck
       - name: Build for GitHub Pages base path
         run: GITHUB_PAGES=true npm run build
       - name: Check generated public asset paths
