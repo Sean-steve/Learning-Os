@@ -50,25 +50,32 @@ test('journal entries survive a refresh', async ({ page }) => {
   await expect(page.getByText('Night observation')).toBeVisible();
 });
 
-test('goal builder saves a new goal in local storage', async ({ page }) => {
+test('Phase 2 generates and saves a dated audio-first learning plan', async ({page})=>{
   await page.goto('/#builder');
-  await page.getByPlaceholder('e.g. Become proficient in lucid dreaming').fill('Learn conversational Swahili');
-  await page.getByRole('button', { name: /Continue/ }).click();
-  await page.getByRole('button', { name: /Continue/ }).click();
-  await page.getByRole('button', { name: /Save learning goal/i }).click();
-  await expect(page).toHaveURL(/#goals$/);
-  await expect(page.getByText('Learn conversational Swahili')).toBeVisible();
+  await page.getByRole('textbox',{name:'Learning goal'}).fill('Learn conversational Swahili');
+  await page.getByRole('textbox',{name:'Measurable outcome'}).fill('Complete practical conversation exercises with evidence');
+  await page.getByRole('button',{name:/Generate structured plan/i}).click();
+  await expect(page.getByText('First seven days')).toBeVisible();
+  await expect(page.getByText('Structured offline')).toBeVisible();
+  await page.getByRole('button',{name:/Save full learning program/}).click();
+  await expect(page).toHaveURL(/#programs$/);
+  await expect(page.getByRole('heading',{name:'Learn conversational Swahili'})).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading',{name:'Learn conversational Swahili'})).toBeVisible();
+  await page.getByRole('button',{name:'Open roadmap'}).click();
+  await expect(page.locator('.p2-task')).toHaveCount(7);
 });
 
-test('knowledge source can be added, filtered, and revisited', async ({ page }) => {
+test('knowledge source can be saved and actual transcript excerpts reviewed', async ({page})=>{
   await page.goto('/#library');
-  await page.getByRole('button', { name: /Add learning source/ }).click();
-  await page.getByPlaceholder('e.g. Dream awareness workshop').fill('Sample learning source');
+  await page.getByPlaceholder('e.g. Dream awareness — lecture 1').fill('Sample learning source');
   await page.getByPlaceholder('https://...').fill('https://example.org/lesson');
-  await page.getByRole('button', { name: /Save source/ }).click();
-  await expect(page.getByText('Sample learning source')).toBeVisible();
+  await page.getByPlaceholder('Paste a video transcript, book notes, article excerpt or your own study notes...').fill('Step 1: Remember your experience and record the details clearly. Step 2: Practice daily awareness. Explain what worked and what did not. Review notes before sleep.');
+  await page.getByRole('button',{name:/Extract source insights/}).click();
+  await expect(page.locator('.p2-source').getByText('Sample learning source')).toBeVisible();
+  await expect(page.locator('.p2-excerpts')).toContainText('anchored excerpts');
   await page.reload();
-  await expect(page.getByText('Sample learning source')).toBeVisible();
+  await expect(page.locator('.p2-source').getByText('Sample learning source')).toBeVisible();
 });
 
 test('calendar session can be created and checked off', async ({ page }) => {

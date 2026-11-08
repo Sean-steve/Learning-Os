@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Phase2Knowledge, Phase2Planner, Phase2Programs, Phase2Curriculum } from './phase2/Phase2Studio';
+import type { LearningPlan, SourceAnalysis } from '../../../packages/learning-core/src/index';
 import type { CSSProperties, FormEvent, ReactNode, ChangeEvent } from 'react';
 import {
   Activity, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, AudioLines, BarChart3,
@@ -93,6 +95,9 @@ function App() {
   const [sources,setSources]=useStored<Source[]>('los.sources',INITIAL_SOURCES);
   const [sessions,setSessions]=useStored<StudySession[]>('los.sessions',INITIAL_SESSIONS);
   const [goals,setGoals]=useStored<Goal[]>('los.goals',INITIAL_GOALS);
+  const [plans,setPlans]=useStored<LearningPlan[]>('los.phase2.plans',[]);
+  const [analyses,setAnalyses]=useStored<SourceAnalysis[]>('los.phase2.analyses',[]);
+  const [activePlanId,setActivePlanId]=useStored<string>('los.phase2.activePlan','');
   const [completed,setCompleted]=useStored<string[]>('los.completed',[]);
   const [journal,setJournal]=useStored<JournalEntry[]>('los.journal',[]);
   const [notes,setNotes]=useStored<string>('los.lessonNotes','');
@@ -108,10 +113,10 @@ function App() {
   const toggle=(id:string)=>setCompleted(prev=>prev.includes(id)?prev.filter(s=>s!==id):[...prev,id]);
   const notices:Notice[]=[
     {title:'Week 1 begins November 9',text:'Your first lessons and dream journal practice are scheduled.',color:'mint'},
-    {title:'Source analysis pending',text:'Your four starting references are saved; transcripts have not been ingested.',color:'violet'},
+    {title:'Source processing available',text:'Paste transcripts or import local PDFs in the Knowledge Library. URLs alone are still unprocessed.',color:'violet'},
     {title:'Your data is local',text:'This prototype stores changes only in this browser.',color:'amber'}
   ];
-  const shared={nav,sources,setSources,sessions,setSessions,goals,setGoals,completed,toggle,journal,setJournal,notes,setNotes,prefs,setPrefs,readerFile,setReaderFile,readerName,setReaderName,notify};
+  const shared={nav,sources,setSources,sessions,setSessions,goals,setGoals,plans,setPlans,analyses,setAnalyses,activePlanId,setActivePlanId,completed,toggle,journal,setJournal,notes,setNotes,prefs,setPrefs,readerFile,setReaderFile,readerName,setReaderName,notify};
   const navGroups:{label:string;items:{id:Route;label:string;icon:ReactNode}[]}[]=[
     {label:'WORKSPACE',items:[{id:'overview',label:'Overview',icon:<Home size={18}/>},{id:'goals',label:'My goals',icon:<Target size={18}/>},{id:'programs',label:'Learning programs',icon:<BookMarked size={18}/>},{id:'calendar',label:'Schedule',icon:<CalendarDays size={18}/>} ]},
     {label:'LEARN',items:[{id:'library',label:'Knowledge library',icon:<Library size={18}/>},{id:'audio',label:'Audio learning',icon:<Headphones size={18}/>},{id:'reader',label:'Reader',icon:<FileText size={18}/>},{id:'focus',label:'Focus studio',icon:<Focus size={18}/>}]},
@@ -122,11 +127,11 @@ function App() {
   const content=()=>{switch(route){
     case 'overview':return <Overview {...shared} focusedMinutes={focusedMinutes} completedSessions={completedSessions}/>;
     case 'goals':return <Goals {...shared}/>;
-    case 'builder':return <Builder {...shared}/>;
-    case 'programs':return <Programs {...shared}/>;
-    case 'curriculum':return <Curriculum {...shared}/>;
+    case 'builder':return <Phase2Planner {...shared}/>;
+    case 'programs':return <Phase2Programs {...shared}/>;
+    case 'curriculum':return <Phase2Curriculum {...shared}/>;
     case 'lesson':return <Lesson {...shared}/>;
-    case 'library':return <Knowledge {...shared}/>;
+    case 'library':return <Phase2Knowledge {...shared}/>;
     case 'audio':return <Audio {...shared}/>;
     case 'reader':return <Reader {...shared}/>;
     case 'calendar':return <Calendar {...shared}/>;
