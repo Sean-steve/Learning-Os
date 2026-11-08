@@ -34,11 +34,11 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Browser acceptance tests
         run: npx playwright test
-      - name: Upload failure screenshots
-        if: failure()
+      - name: Upload UI screenshots and debug evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: learning-os-phase1-ui-debug
+          name: learning-os-phase1-ui-evidence
           path: |
             test-results/
             playwright-report/
