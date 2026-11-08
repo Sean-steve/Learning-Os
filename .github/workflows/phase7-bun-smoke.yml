@@ -1,0 +1,49 @@
+name: Learning OS — Phase 7 Real Bun Runtime Smoke (advisory)
+on:
+  push:
+    branches: ["phase/7-security-sync-production-certification"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  real-bun:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: los_ci
+          POSTGRES_PASSWORD: los_ci_private_test
+          POSTGRES_DB: learning_os_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U los_ci -d learning_os_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: true
+      MIGRATION_DATABASE_URL: postgres://los_ci:los_ci_private_test@127.0.0.1:5432/learning_os_test
+      DATABASE_URL: postgres://los_app_ci:los_app_ci_test_only@127.0.0.1:5432/learning_os_test
+      WEB_ORIGIN: http://localhost:5173
+      API_HOST: 127.0.0.1
+      API_PORT: 3005
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run db:migrate && node scripts/provision-ci-role.mjs
+      - name: Install Bun runtime
+        uses: oven-sh/setup-bun@v2
+      - name: Real Bun and PostgreSQL smoke
+        run: bash scripts/test-bun-api.sh
+      - name: Log failure
+        if: failure()
+        run: cat /tmp/learning-os-bun-smoke.log || true

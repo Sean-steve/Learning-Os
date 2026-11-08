@@ -1,0 +1,10 @@
+import {readFileSync,existsSync} from 'node:fs';
+const required=['tests/integration/phase7-security.test.mjs','tests/e2e/phase7.spec.ts','scripts/backup-encrypted.sh','scripts/restore-scratch.sh','infra/nginx/learning-os.conf.example','infra/systemd/learning-os-api.service.example','docs/PHASE-7-ENGINEERING.md'];
+for(const path of required)if(!existsSync(path))throw Error('Phase 7 required file missing: '+path);
+const db=readFileSync('services/api/src/phase6/db.ts','utf8');
+const auth=readFileSync('services/api/src/phase6/auth.ts','utf8');
+const cloud=readFileSync('apps/web/src/phase6/cloud-sync.ts','utf8');
+if(db.includes("learning_os_local@")||!db.includes('DATABASE_URL must be explicitly configured'))throw Error('Default PostgreSQL credential is not allowed');
+for(const marker of ["'/v1/auth/sessions'","'/v1/auth/revoke-others'","'/v1/auth/change-password'"])if(!auth.includes(marker))throw Error('Missing device security endpoint: '+marker);
+for(const marker of ['refreshCloud','startCloudReconciliation','revision_conflict'])if(!cloud.includes(marker))throw Error('Missing cloud sync protection: '+marker);
+console.log('Learning OS Phase 7 source, security and infrastructure gates PASS');

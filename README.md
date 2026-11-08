@@ -171,3 +171,9 @@ npm run dev       # Vite frontend on localhost:5173
 ```
 
 GitHub Pages is still a **static, local-first preview**, not an API host. See [Phase 6 engineering and limitations](docs/PHASE-6-ENGINEERING.md).
+
+## Phase 7 — Security & cross-device readiness
+
+PostgreSQL sessions can now be reviewed, other devices revoked, and passwords rotated. When a locally authenticated account is active, the UI checks for remote changes every 15 seconds while visible and on focus/online. Conflicting revisions are never silently overwritten. A separate local HTTPS deployment with `VITE_LEARNING_API_ENABLED=true` may enable these features outside localhost; **GitHub Pages remains static preview only**. See [Phase 7 Runbook](docs/PHASE-7-ENGINEERING.md).
+
+**Production remains blocked** until a real host, TLS, secure identity recovery and MFA, tested encrypted off-site backups/restore, operational monitoring and external security/privacy validation are complete.
