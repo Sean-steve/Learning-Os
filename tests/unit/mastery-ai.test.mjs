@@ -1,0 +1,10 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { masteryAiRoute } from '../../services/api/src/mastery-ai.ts';
+const opts={origin:'http://localhost:5173',hostname:'127.0.0.1',apiKey:'',model:'unused'};
+const body={completedSessions:1,assessmentAttempts:2,knowledgeShown:0,practiceRecords:3,dueReviews:1,sleepQuality:6,dailyBudget:45};
+const request=(data,headers={})=>new Request('http://127.0.0.1:3005/v1/mastery/ai-review',{method:'POST',headers:{'Content-Type':'application/json','Origin':'http://localhost:5173',...headers},body:JSON.stringify(data)});
+test('private AI endpoint refuses external host even without credentials',async()=>{const r=await masteryAiRoute(request(body),{...opts,hostname:'0.0.0.0'});assert.equal(r.status,403);assert.equal((await r.json()).error,'private_loopback_only');});
+test('private AI endpoint refuses mismatched browser origin',async()=>{const r=await masteryAiRoute(request(body,{'Origin':'https://example.org'}),opts);assert.equal(r.status,403);});
+test('unconfigured AI endpoint returns unavailable without making a remote call',async()=>{const r=await masteryAiRoute(request(body),opts);assert.equal(r.status,503);assert.equal((await r.json()).error,'ai_not_configured');});
+test('preflight only allows expected origin and POST',async()=>{const r=await masteryAiRoute(new Request('http://127.0.0.1:3005/v1/mastery/ai-review',{method:'OPTIONS',headers:{Origin:'http://localhost:5173'}}),opts);assert.equal(r.status,204);assert.equal(r.headers.get('Access-Control-Allow-Origin'),'http://localhost:5173');});
