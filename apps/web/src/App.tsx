@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Phase2Knowledge, Phase2Planner, Phase2Programs, Phase2Curriculum } from './phase2/Phase2Studio';
 import MediaStudio from './phase3/MediaStudio';
+import ScheduleCenter from './phase4/ScheduleCenter';
 import type { LearningPlan, SourceAnalysis } from '../../../packages/learning-core/src/index';
 import type { CSSProperties, FormEvent, ReactNode, ChangeEvent } from 'react';
 import {
@@ -73,6 +74,7 @@ const QUIZ = [
 function useStored<T>(name:string, initial:T): [T, (val:T | ((prev:T)=>T))=>void] {
   const [state,setState]=useState<T>(()=>{try{const raw=localStorage.getItem(name);return raw?JSON.parse(raw) as T:initial;}catch{return initial;}});
   useEffect(()=>{try{localStorage.setItem(name,JSON.stringify(state));}catch{/* private mode */}},[name,state]);
+  useEffect(()=>{const onStorage=(event:StorageEvent)=>{if(event.key!==name||!event.newValue)return;try{setState(JSON.parse(event.newValue) as T)}catch{/* ignore bad cross-tab updates */}};window.addEventListener('storage',onStorage);return()=>window.removeEventListener('storage',onStorage)},[name]);
   return [state,setState];
 }
 const classNames=(...parts:(string|false|undefined)[])=>parts.filter(Boolean).join(' ');
@@ -136,13 +138,13 @@ function App() {
     case 'studio':return <MediaStudio sources={sources} notify={notify}/>;
     case 'audio':return <Audio {...shared}/>;
     case 'reader':return <Reader {...shared}/>;
-    case 'calendar':return <Calendar {...shared}/>;
+    case 'calendar':return <ScheduleCenter {...shared} view="calendar"/>;
     case 'focus':return <FocusStudio {...shared}/>;
     case 'journal':return <Journal {...shared}/>;
     case 'assessments':return <Assessments {...shared}/>;
     case 'analytics':return <Analytics {...shared} focusedMinutes={focusedMinutes} completedSessions={completedSessions}/>;
     case 'coach':return <Coach {...shared}/>;
-    case 'accountability':return <Accountability {...shared}/>;
+    case 'accountability':return <ScheduleCenter {...shared} view="accountability"/>;
     case 'integrations':return <Integrations {...shared}/>;
     case 'settings':return <Settings {...shared}/>;
   }};
@@ -157,7 +159,7 @@ function App() {
     <main className="main-column">
       <header className="topbar"><div className="topbar-start"><button className="icon-button mobile-toggle" aria-label="Open menu" onClick={()=>setMenuOpen(true)}><Menu size={21}/></button><div className="breadcrumbs"><span>Workspace</span><ChevronRight size={14}/><strong>{pageNames[route]}</strong></div></div><div className="topbar-actions"><button className="search-trigger" aria-label="Search your workspace" onClick={()=>setSearchOpen(true)}><Search size={17}/><span>Search your workspace</span><kbd>⌘ K</kbd></button><Badge tone="preview">● Preview data</Badge><button className="icon-button notice-button" aria-label="Notifications" onClick={()=>setNoticesOpen(!noticesOpen)}><Bell size={19}/><span className="notice-dot"/></button><button className="top-avatar" aria-label="Account settings" onClick={()=>nav('settings')}>{prefs.name.slice(0,1).toUpperCase()}</button></div>
       {noticesOpen&&<div className="notice-menu"><div className="notice-menu-head"><strong>Notifications</strong><button className="text-button" onClick={()=>setNoticesOpen(false)}>Close</button></div>{notices.map((n,i)=><div className="notice-row" key={i}><span className={`notice-mark ${n.color}`}/><div><b>{n.title}</b><p>{n.text}</p></div></div>)}</div>}</header>
-      <div className="page-container">{content()}<footer className="footer-bar"><span>Learning OS · Phase 3 multimedia preview</span><span><ShieldCheck size={14}/> Browser-local preview · No live AI or backend sync</span></footer></div>
+      <div className="page-container">{content()}<footer className="footer-bar"><span>Learning OS · Phase 4 scheduling preview</span><span><ShieldCheck size={14}/> Browser-local preview · No live AI or backend sync</span></footer></div>
     </main>
     {searchOpen&&<SearchPalette close={()=>setSearchOpen(false)} nav={nav} navGroups={navGroups} sources={sources}/>}
     {toast&&<div className="toast"><CheckCircle2 size={18}/>{toast}</div>}
