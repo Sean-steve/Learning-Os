@@ -28,6 +28,20 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: TypeScript/Bun API health smoke test
+        run: |
+          bun services/api/src/server.ts > /tmp/learning-os-api.log 2>&1 &
+          API_PID=$!
+          trap 'kill "$API_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:3005/health -o /tmp/health.json; then break; fi
+            sleep 1
+          done
+          node -e "const h=require('/tmp/health.json'); if(!h.ok || h.service!=='learning-os-api') process.exit(1)"
+          curl -fsS http://127.0.0.1:3005/v1/meta | grep -q "Learning OS"
       - name: Install Playwright runner and Chromium
         run: |
           npm install --no-save --no-package-lock @playwright/test@^1.56.0
