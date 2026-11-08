@@ -18,17 +18,18 @@ test('all 18 primary routes render without uncaught exceptions', async ({page}) 
   expect(errors).toEqual([]);
 });
 
-test('dashboard navigation and visible demo-data disclosure', async ({page}) => {
+test('sidebar navigation and demo data disclosure', async ({page}) => {
   await page.goto('/#overview');
   await expect(page.getByText('Preview data').first()).toBeVisible();
-  await expect(page.locator('nav[aria-label="Main navigation"]')).toBeAttached();
-  await page.getByRole('button', {name: /Learning library/i}).first().click().catch(async()=>{
-    await page.goto('/#library');
-  });
-  await expect(page.locator('main h1').first()).toBeVisible();
+  const nav=page.getByRole('navigation', {name:'Main navigation'});
+  await expect(nav).toBeAttached();
+  const isMobile=await page.evaluate(()=>window.innerWidth <= 740);
+  if(isMobile) await page.getByRole('button', {name:'Open menu'}).click();
+  await nav.getByRole('button', {name:'Knowledge library'}).click();
+  await expect(page).toHaveURL(/#library$/);
 });
 
-test('mobile layout has no major horizontal overflow', async ({page, isMobile}) => {
+test('mobile dashboard has no major horizontal overflow', async ({page, isMobile}) => {
   if (!isMobile) test.skip();
   await page.goto('/#overview');
   const width=await page.evaluate(()=>document.documentElement.scrollWidth);
