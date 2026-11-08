@@ -5,32 +5,27 @@ on:
   pull_request:
     branches: [main]
 permissions:
-  contents: write
+  contents: read
 jobs:
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
       - name: Verify source imported
         run: |
+          test -f package-lock.json
           test -f package.json
           test -f apps/web/src/App.tsx
           test -f apps/web/src/styles.css
           test -f scripts/check-phase1.mjs
           test -f tests/e2e/screens.spec.ts
-      - name: Install workspace dependencies
-        run: |
-          if test -f package-lock.json; then
-            npm ci --no-audit --no-fund
-          else
-            npm install --no-audit --no-fund
-          fi
+      - run: npm ci --no-audit --no-fund
       - run: npm run check:phase1
       - run: npm run typecheck
       - run: npm run build
@@ -38,16 +33,6 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run 18-screen UI smoke tests
         run: npm run test:e2e
-      - name: Commit generated dependency lockfile
-        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
-        run: |
-          git add package-lock.json
-          if ! git diff --cached --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore: add npm dependency lockfile for reproducible UI builds"
-            git push origin HEAD:"${GITHUB_REF_NAME}"
-          fi
       - name: Upload UI test and build artifacts
         if: always()
         uses: actions/upload-artifact@v4

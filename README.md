@@ -73,3 +73,21 @@ Use `feature/learning-os-phase-1` when publishing to a new GitHub repository. Th
 ## Quick visual reference
 
 Open `preview.html` as a **static** dashboard preview. It does not run the React interactions. The actual UI requires the `npm install` + `npm run dev` steps above.
+
+## Phase 1.1 — Verified frontend UI
+
+Source has been imported into GitHub and the Node 22 / Playwright pipeline verifies
+all 18 routes on Chromium desktop and mobile. See
+[Phase 1.1 Certification](docs/PHASE-1.1-CERTIFICATION.md).
+
+```bash
+npm ci
+npm run check:phase1
+npm run typecheck
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+The UI still uses demo lessons and browser-local data. Postgres, AI and Calendar
+app integration belong to later phases.

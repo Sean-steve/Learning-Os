@@ -1,40 +1,56 @@
-# Phase 1.1 — Repository Setup, Local Build Verification and UI Certification
+# Learning OS — Phase 1.1 Automated UI Certification
 
-## Source
-Original Phase 1 ZIP: `learning-os-phase1.zip` provided in the associated ChatGPT conversation.
-The archive contains React 19/TypeScript/Vite web UI, 18 navigation views, CSS,
-Bun/TypeScript API stub, shared contracts, docs, and static route checks.
+**Status:** PASS — Chromium desktop + mobile UI prototype
+**Date:** 2026-11-08
+**Repository:** Sean-steve/Learning-Os
+**Pull request:** https://github.com/Sean-steve/Learning-Os/pull/2
 
-## Verified locally on 2026-11-08
-- The archive is present and readable (58 KB compressed).
-- Node v22.16.0 and npm v10.9.2 are available.
-- `node scripts/check-phase1.mjs` **PASS**:
-  18 routes, styling foundations, reference timeline, Bun API stub and docs.
-- `npm install` timed out due to network restrictions.
-- `npm install --offline` failed because the required npm packages are not cached.
-- Bun is not installed in the validation container.
-- Browser walkthrough, responsiveness, keyboard navigation, a11y and video/audio/PDF journeys: NOT VERIFIED.
+## Source and build
+- Original Phase 1 ZIP imported into editable GitHub repository source (20 archived files).
+- Original `App.tsx`, `styles.css`, and `main.tsx` Git blob hashes verified against the archive.
+- React 19 + TypeScript + Vite frontend, Bun/TypeScript API stub and shared contracts retained.
+- Node 22, `npm ci`, `npm run check:phase1`, `npm run typecheck`, and `npm run build` configured in GitHub Actions.
+- `package-lock.json` generated during successful CI, then committed for deterministic installation.
 
-## Repository status
-- Target: Sean-steve/Learning-Os
-- Branch: `phase/1.1-repository-ui-certification`
-- A gated GitHub Actions workflow is defined. The complete Phase 1 archive source has
-  **not yet been imported**; this workflow is expected to fail its source gate
-  until the source and generated `package-lock.json` are committed.
-- Do not merge to `main` or claim certification before the gates are green.
+## UI route coverage (18 screens × 2 viewports)
+All 18 routes passed automated checks on desktop Chromium (1440×900) and mobile Chromium (Pixel 7):
 
-## Acceptance gates
-1. Import archive contents into repository root (remove outer `learning-os-phase1/`).
-2. Run `npm install` and commit generated package-lock.json.
-3. Run `npm run check:phase1`, `npm run typecheck`, `npm run build`.
-4. Launch `npm run dev` and inspect all 18 routes on mobile and desktop.
-5. Verify keyboard focus, accessible labels, contrast and reduced-motion behavior.
-6. Test learning goal wizard, journaling, media playback, PDF upload and scheduling
-   with representative demo data.
-7. Record bugs with reproduction steps, severity, screenshots and retest evidence.
-8. Confirm GitHub Actions checks and review PR before merging.
+`overview`, `goals`, `builder`, `programs`, `curriculum`, `lesson`,
+`library`, `audio`, `reader`, `calendar`, `focus`, `journal`,
+`assessments`, `analytics`, `coach`, `accountability`, `integrations`, `settings`.
 
-## Architecture guardrails
-Frontend: React/TypeScript/Vite. Backend: TypeScript/Bun.
-Do not introduce Laravel; PostgreSQL and HOS integration are later phases.
-Demo data must be visibly distinguishable from durable persistence.
+Each route must show a visible main heading, valid route, local-data disclosure,
+no unhandled JavaScript exception, and no horizontal document overflow.
+A screenshot is captured and attached as test evidence.
+
+## Functional acceptance coverage (10 flows × 2 viewports)
+- Sidebar navigation, history, search palette (including mobile accessibility label)
+- Goal builder draft creation
+- Journal entry creation and persistence after refresh
+- Library source creation and persistence after refresh
+- Calendar session creation and persistence after refresh
+- Audio queue selection and completion tracking
+- Local PDF viewer opens a sample PDF without remote upload
+- Focus timer start and pause
+- Lesson note persistence
+- Three-question assessment, scoring and feedback
+
+## Evidence
+- **56/56 Playwright tests passed** (36 route checks + 20 interactions).
+- Verified workflow: https://github.com/Sean-steve/Learning-Os/actions/runs/42464436254
+- Build/screenshots/test report artifact: https://github.com/Sean-steve/Learning-Os/actions/runs/42464436254/artifacts/13610793345
+- Mobile search button accessibility name defect resolved during certification.
+- Initial calendar test had an ambiguous locator, corrected; application session creation was functioning.
+
+## Boundaries / follow-ups
+This is **Phase 1 frontend prototype UI certification**, not production certification.
+Remaining for later phases: real AI, ingestion, PostgreSQL, backend authentication,
+OAuth/Google Calendar app sync, durable evidence, and HOS adapter.
+Cross-browser Firefox/WebKit, physical-device testing, comprehensive WCAG audit,
+and visual review of all screenshots are still necessary before public release.
+Speech synthesis and PDF rendering were covered at UI level only, not across voice engines or document varieties.
+Extraordinary claims are not presented as scientifically proven outcomes.
+
+## Decision
+Phase 1.1 automated UI exit gate: **PASS**. Eligible for code review and Phase 2 planning.
+Keep integration or public-launch claims explicitly separate from the prototype evidence.

@@ -1,25 +1,19 @@
-# Import the original Phase 1 source ZIP
+# Phase 1 ZIP — Import provenance
+The Phase 1 source was imported into this repository on the `phase/1.1-repository-ui-certification` branch.
+The original archive `learning-os-phase1.zip` is stored in the prior ChatGPT delivery,
+and its web app, Bun server stub, shared contracts, preview and documentation were preserved
+as editable source files in their original paths.
 
-The original Phase 1 archive is available from the Learning OS conversation.
-This GitHub connection supports repository file writes but no ZIP import.
-Import the archive without nesting its outer folder:
-
+To run locally:
 ```bash
-unzip learning-os-phase1.zip
-cd learning-os-phase1
-npm install
+git clone https://github.com/Sean-steve/Learning-Os.git
+cd Learning-Os
+git switch phase/1.1-repository-ui-certification
+npm ci
 npm run check:phase1
 npm run typecheck
 npm run build
-git init
-git remote add origin https://github.com/Sean-steve/Learning-Os.git
-git fetch origin
-git checkout -b phase/1.1-repository-ui-certification origin/phase/1.1-repository-ui-certification
-git add .
-git commit -m "feat: import Learning OS Phase 1 frontend and Bun API"
-git push -u origin phase/1.1-repository-ui-certification
+npm run dev
 ```
-
-Git commands assume an appropriately authenticated GitHub account; do not commit
-.env values, credentials, node_modules or build artifacts. Review any checkout
-overwrites before proceeding.
+Visit `http://localhost:5173`. These routes are browser-local demos;
+there is no real AI, backend persistence, calendar sync, or HOS connection yet.
