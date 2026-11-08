@@ -1,43 +1,51 @@
-# Learning OS Phase 1.1 — Repository and UI Certification
+# Learning OS — Phase 1.1 Repository and UI Certification
 
 Date: 2026-11-08
 
-## Verified
-- Found GitHub repository `Sean-steve/Learning-Os` (initially empty).
-- Initialized `main` and created review branch `phase/1.1-repository-certification`.
-- Original Phase 1 ZIP inspected: React/Vite frontend, Bun/TypeScript API, 18 navigable routes.
-- Offline `npm run check:phase1`: PASS.
-- TypeScript `transpileModule` syntax scan of `App.tsx`: 0 errors.
+## Delivered
+- Repository: `Sean-steve/Learning-Os`
+- Default branch initialized: `main`
+- Review branch: `phase/1.1-repository-certification`
+- Original 18-view React/TypeScript UI source imported from the Phase 1 ZIP.
+- TypeScript/Bun API foundation and contracts imported.
+- Responsive preview, source documentation and integration stubs imported.
+- GitHub Actions workflow for structural, typecheck, Vite build and Playwright browser testing.
+- Dedicated Playwright test suite for 18 routes, desktop/mobile viewport checks and browser exceptions.
 
-## Not verified
-- npm dependencies could not be installed in the assistant's isolated runtime (registry DNS unavailable).
-- `tsc` with real React dependencies and `vite build` cannot be honestly marked PASS.
-- Chromium blocked access to both file: and localhost: URLs in this runtime.
-- Full source ZIP cannot be uploaded directly with the available GitHub connector.
-- Browser accessibility, interaction and responsive QA remain pending.
-- CI is deliberately configured to fail if the original source is missing; do not bypass this gate.
+## Evidence
+- Local static validator: **PASS**
+- Standalone TypeScript TSX syntax transpilation: **0 errors**
+- npm registry access locally: **FAILED** (DNS sandbox block)
+- Dependency-backed typecheck: **PENDING GitHub Actions**
+- Production build: **PENDING GitHub Actions**
+- Browser e2e: **PENDING GitHub Actions**
+- Full visual/manual accessibility audit: **PENDING**
 
-## Required source import
-From Ubuntu, download the Phase 1 ZIP linked in the ChatGPT conversation, then run:
+## Release gate
+Do not merge to `main` unless CI is green and manual UI smoke review is complete.
+Do not confuse 18 routes present in source with 18 routes fully certified.
 
+## Test on Ubuntu
 ```bash
 git clone https://github.com/Sean-steve/Learning-Os.git
 cd Learning-Os
-git fetch --all
 git checkout phase/1.1-repository-certification
-bash scripts/import-phase1.sh ~/Downloads/learning-os-phase1.zip --push
+npm install
+npm run check:phase1
+npm run typecheck
+npm run build
+npm run dev
 ```
 
-The import copies the original source into the review branch without deleting CI files.
+For browser tests:
+```bash
+npm install --no-save --no-package-lock @playwright/test@^1.56.0
+npx playwright install chromium
+npx playwright test
+```
 
-## Acceptance gates
-1. All original Phase 1 files present in the repository.
-2. npm dependencies install without conflict.
-3. Structural checker succeeds.
-4. Actual TypeScript typecheck succeeds.
-5. Vite production build succeeds.
-6. All 18 routes pass Playwright on desktop and mobile.
-7. No uncaught browser errors; responsive layout and keyboard access manually reviewed.
-8. PR reviewed and approved, then merged to `main`.
+## Known functional boundaries
+Phase 1 provides browser-local demo interactions. AI inference, PostgreSQL persistence, reminder delivery, Google Calendar sync and HOS interoperability are **future-phase integrations**, not delivered systems.
 
-**Status:** Repository and automation prepared; source import and green CI are outstanding. Do NOT claim complete UI certification.
+## Next decision
+When all certification gates pass, merge the PR; then begin Phase 2: AI curriculum generation and source management.
