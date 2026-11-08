@@ -14,9 +14,41 @@ export async function currentUser(req:Request,ctx:AuthContext):Promise<{id:strin
 export async function authRoute(req:Request,ctx:AuthContext):Promise<Response> {
   const path=new URL(req.url).pathname;
   if(req.method==='GET'&&path==='/v1/auth/me')return json({user:await currentUser(req,ctx)});
+  if(req.method==='GET'&&path==='/v1/auth/sessions'){
+    const user=await currentUser(req,ctx),token=extractSessionToken(req);
+    if(!user||!token)return fail('unauthorized',401);
+    const rows=await ctx.db.query(
+      'SELECT id,created_at AS "createdAt",expires_at AS "expiresAt",token_hash FROM los_sessions WHERE user_id=$1 AND expires_at>now() ORDER BY created_at DESC LIMIT 50',[user.id]);
+    return json({sessions:rows.rows.map((row:{id:string;createdAt:string;expiresAt:string;token_hash:string})=>
+      ({id:row.id,createdAt:row.createdAt,expiresAt:row.expiresAt,current:row.token_hash===tokenDigest(token)}))});
+  }
   if(req.method!=='POST')return fail('not_found',404);
   if(!validateOrigin(req,ctx.origin))return fail('invalid_origin_or_intent',403);
-  if(!['/v1/auth/register','/v1/auth/login','/v1/auth/logout'].includes(path))return fail('not_found',404);
+  if(!['/v1/auth/register','/v1/auth/login','/v1/auth/logout','/v1/auth/revoke-others','/v1/auth/change-password'].includes(path))return fail('not_found',404);
+  if(path==='/v1/auth/revoke-others'||path==='/v1/auth/change-password'){
+    const user=await currentUser(req,ctx),token=extractSessionToken(req);
+    if(!user||!token)return fail('unauthorized',401);
+    if(path==='/v1/auth/revoke-others'){
+      const result=await ctx.db.query('DELETE FROM los_sessions WHERE user_id=$1 AND token_hash<>$2',[user.id,tokenDigest(token)]);
+      return json({ok:true,revoked:result.rowCount||0});
+    }
+    try{
+      const data=await parseJson(req,2_000);
+      const oldPassword=data.currentPassword,newPassword=data.newPassword;
+      if(typeof oldPassword!=='string'||typeof newPassword!=='string')return fail('invalid_credentials',400);
+      const row=await ctx.db.query('SELECT password_hash FROM los_users WHERE id=$1',[user.id]);
+      if(!row.rows[0]||!await verifyPassword(oldPassword,row.rows[0].password_hash))return fail('invalid_credentials',401);
+      const updated=await hashPassword(newPassword);
+      await ctx.db.query('UPDATE los_users SET password_hash=$2 WHERE id=$1',[user.id,updated]);
+      const revoked=await ctx.db.query('DELETE FROM los_sessions WHERE user_id=$1 AND token_hash<>$2',[user.id,tokenDigest(token)]);
+      return json({ok:true,revoked:revoked.rowCount||0});
+    }catch(err){
+      const code=err instanceof Error?err.message:'invalid_credentials';
+      if(['weak_password','invalid_json'].includes(code))return fail(code,400);
+      if(code==='request_too_large')return fail(code,413);
+      return fail('server_unavailable',503);
+    }
+  }
   if(path==='/v1/auth/logout'){
     const token=extractSessionToken(req);if(token)await ctx.db.query('DELETE FROM los_sessions WHERE token_hash=$1',[tokenDigest(token)]);
     return json({ok:true},200,{'Set-Cookie':sessionCookie('',ctx.secure,true)});
