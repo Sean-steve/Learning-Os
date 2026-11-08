@@ -12,6 +12,14 @@ const hostname=process.env.API_HOST||'127.0.0.1';
 const origin=process.env.WEB_ORIGIN||'http://localhost:5173';
 const apiKey=process.env.OPENAI_API_KEY||'';
 const model=process.env.OPENAI_MODEL||'gpt-6-luna';
+// Fail closed: the HTTP listener must remain on loopback, even behind the HTTPS reverse proxy.
+if(!['127.0.0.1','localhost','::1'].includes(hostname))throw Error('API_HOST must be loopback; use a TLS reverse proxy');
+if(process.env.APP_ENV==='production'){
+  if(!origin.startsWith('https://')||origin.includes('localhost')||origin.includes('127.0.0.1'))
+    throw Error('Production WEB_ORIGIN must be a dedicated HTTPS domain');
+  if(process.env.AUTH_REQUIRE_MFA!=='true')throw Error('Production requires AUTH_REQUIRE_MFA=true');
+  if(!/^[a-f0-9]{64}$/i.test(process.env.MFA_ENCRYPTION_KEY||''))throw Error('Production requires MFA_ENCRYPTION_KEY (64 hex chars)');
+}
 const maxBody=75_000;
 const calls=new Map<string,{n:number;reset:number}>();
 const headers={ 'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'GET,POST,OPTIONS','Access-Control-Allow-Headers':'Content-Type' };
@@ -56,8 +64,8 @@ Bun.serve({port,hostname,async fetch(req,server){
   if(path==='/v1/accountability/ai-review') return aiAccountabilityRoute(req,{origin,hostname,apiKey,model});
   if(path==='/v1/mastery/ai-review') return masteryAiRoute(req,{origin,hostname,apiKey,model});
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
-  if(req.method==='GET'&&path==='/health'){try{await pool.query('SELECT 1');return response({ok:true,service:'learning-os-api',phase:6,persistence:true,database:'connected',aiConfigured:Boolean(apiKey)})}catch{return response({ok:false,service:'learning-os-api',phase:6,database:'unavailable'},503)}}
-  if(req.method==='GET'&&path==='/v1/meta')return response({name:'Learning OS',version:'0.6.0',mode:'postgres-local-first',aiConfigured:Boolean(apiKey),persistence:'postgresql-authenticated'});
+  if(req.method==='GET'&&path==='/health'){try{await pool.query('SELECT 1');return response({ok:true,service:'learning-os-api',phase:7.1,persistence:true,database:'connected',aiConfigured:Boolean(apiKey)})}catch{return response({ok:false,service:'learning-os-api',phase:7.1,database:'unavailable'},503)}}
+  if(req.method==='GET'&&path==='/v1/meta')return response({name:'Learning OS',version:'0.7.1',mode:'postgres-local-first',aiConfigured:Boolean(apiKey),persistence:'postgresql-authenticated'});
   if(req.method!=='POST')return error('not_found',404);
   if(path!=='/v1/plans/ai-generate')return error('not_found',404);
   if(req.headers.get('origin')&&req.headers.get('origin')!==origin)return error('forbidden_origin',403);

@@ -1,11 +1,14 @@
 import type {AuthContext} from './auth.ts';
 import {currentUser} from './auth.ts';
+import {mfaEnabled} from '../phase71/mfa.ts';
 import {getRecords,putRecord,VersionConflict} from './db.ts';
 import {parseJson,validateOrigin,validRecordKey,validateRecord,parseRevision} from './core.ts';
 const json=(body:unknown,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export async function recordsRoute(req:Request,ctx:AuthContext):Promise<Response>{
   const user=await currentUser(req,ctx);
   if(!user)return json({error:'unauthorized'},401);
+  if(process.env.AUTH_REQUIRE_MFA==='true'&&!await mfaEnabled(ctx.db,user.id))
+    return json({error:'mfa_enrollment_required'},403);
   const path=new URL(req.url).pathname;
   if(req.method==='GET'&&path==='/v1/records')return json({records:await getRecords(ctx.db,user.id),user:{id:user.id,email:user.email}});
   if(req.method!=='PUT'||path!=='/v1/records')return json({error:'not_found'},404);
