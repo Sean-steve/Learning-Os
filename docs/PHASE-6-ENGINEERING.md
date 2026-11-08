@@ -53,3 +53,15 @@
 ## Verification gates
 
 `npm run check:phase6`, `npm run test:core`, `npm run typecheck`, `npm run build`, `npm run test:db`, all Playwright browser tests, and GitHub Pages build verification must pass before merge. Production readiness remains blocked by the missing operational and identity/security requirements listed above.
+
+## Verified CI evidence — 2026-11-08
+
+- Source, all pre-existing unit checks, authentication cryptography and PostgreSQL integration checks: **PASS**.
+- Migration and per-account ownership checks: **PASS** against PostgreSQL service in GitHub Actions with restricted application role.
+- TypeScript and Vite production build, including the GitHub Pages base path: **PASS**.
+- Desktop and mobile browser acceptance: **108 of 108 Playwright tests PASS**, including registration, explicit import, a new journal entry reaching PostgreSQL, login recovery, logout revocation and offline preview.
+- Passing run: https://github.com/Sean-steve/Learning-Os/actions/runs/42504160616
+- The account-recovery state machine was made single-flight and no longer reports "connected" before recovery finishes, preventing edits during an activation/reload race.
+- The temporary workflow used to generate npm lockfiles was removed after the lockfile was committed.
+
+**Scope of certification:** local database + CI test gateway calling the Bun-compatible Fetch handlers. The deployed GitHub Pages build is static and does not offer hosted authentication. A real Bun server operational smoke test, production identity hardening, durable backups/restore and full multi-device conflict tests remain deployment-release gates.
