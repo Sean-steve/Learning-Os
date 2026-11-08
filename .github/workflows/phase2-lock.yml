@@ -1,5 +1,7 @@
 name: Learning OS — Update dependency lockfile
 on:
+  push:
+    branches: ["phase/2-ai-knowledge-planning-pages"]
   workflow_dispatch:
 permissions:
   contents: write
