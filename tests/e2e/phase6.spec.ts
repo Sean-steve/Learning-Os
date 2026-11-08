@@ -15,21 +15,12 @@ test('account registration, explicit import and durable journal record',async({p
  await page.locator('.cloud-check input').check();
  await page.getByRole('button',{name:/Import this browser/}).click();
  await expect(page.getByText('Signed in to local PostgreSQL')).toBeVisible();
+ await expect(page.getByRole('button',{name:/Learning records: Connected/})).toBeVisible();
  await page.goto('/#journal');
  await page.getByPlaceholder('e.g. A vivid fragment from last night').fill('Durable journal for '+email.slice(0,8));
  await page.getByPlaceholder('Describe what happened, what you remembered, what you felt, or what you practiced...').fill('Uploaded through private, authenticated PostgreSQL sync.');
  await page.getByRole('button',{name:/Save journal entry/}).click();
- await expect(page.getByText('Uploaded through private, authenticated PostgreSQL sync.')).toBeVisible();
- await page.waitForTimeout(2500);
- const diagnosis=await page.evaluate(async()=>{
-   const r=await fetch('/api/v1/records',{credentials:'same-origin'});
-   const json=await r.json().catch(()=>({error:'not_json'}));
-   return {status:r.status,recordKeys:json.records?.map((x:any)=>({key:x.key,rev:x.revision,items:Array.isArray(x.data)?x.data.length:null})),error:json.error,
-    local:localStorage.getItem('los.journal')?.slice(0,250),owner:localStorage.getItem('los.sync.owner'),enabled:localStorage.getItem('los.sync.enabled'),
-    versions:localStorage.getItem('los.sync.versions'),hashes:localStorage.getItem('los.sync.hashes'),
-    accountBadge:document.querySelector('.cloud-badge')?.textContent};
- });
- console.log('Phase6 sync diagnosis:',JSON.stringify(diagnosis));
+ await expect(page.locator('.journal-history').getByText('Uploaded through private, authenticated PostgreSQL sync.')).toBeVisible();
  await expect.poll(async()=>page.evaluate(async()=>{
    const r=await fetch('/api/v1/records',{credentials:'same-origin'});
    const j=await r.json();return Boolean(j.records?.find((x:any)=>x.key==='los.journal')?.data?.some((x:any)=>x.description?.includes('PostgreSQL sync')));
