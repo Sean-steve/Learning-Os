@@ -73,3 +73,10 @@ successful deployment. The AI service and database are not available on that Pag
 - Optional AI API requires a private server key and validates model output.
 - Frontend compiles, all Phase 1 routes still render, Playwright checks pass, Pages base passes.
 - Public deployment is verified independently after Pages is enabled.
+
+## Runtime validation note
+
+The optional Bun API source is syntax-checked in CI. A GitHub-hosted Bun runtime
+install encountered HTTP 504 and is not required to certify the static frontend.
+The `tests/api-health.sh` smoke test remains available for a local machine with Bun installed;
+AI endpoint behavior against an actual OpenAI credential is not yet certified.
