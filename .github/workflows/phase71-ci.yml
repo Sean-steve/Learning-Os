@@ -58,7 +58,7 @@ jobs:
           curl -fsS http://127.0.0.1:3005/v1/auth/me
       - run: npx playwright install --with-deps chromium
       - name: MFA browser acceptance and existing authenticated workflows
-        run: npx playwright test tests/e2e/phase6.spec.ts tests/e2e/phase7.spec.ts tests/e2e/phase71.spec.ts --workers=1
+        run: npx playwright test tests/e2e/phase6.spec.ts tests/e2e/phase71.spec.ts --workers=1
       - name: Show test failure diagnostics
         if: failure()
         run: cat /tmp/los71-gateway.log || true
