@@ -6,7 +6,8 @@
     "apps/web",
     "services/api",
     "packages/contracts",
-    "packages/learning-core"
+    "packages/learning-core",
+    "packages/sync-contract"
   ],
   "scripts": {
     "dev": "npm run dev --workspace @learning-os/web",
@@ -21,7 +22,10 @@
     "check:phase3": "node scripts/check-phase3.mjs",
     "test:media": "node --experimental-strip-types --test tests/unit/media-core.test.mjs",
     "check:phase4": "node scripts/check-phase4.mjs",
-    "check:phase5": "node scripts/check-phase5.mjs"
+    "check:phase5": "node scripts/check-phase5.mjs",
+    "check:phase6": "node scripts/check-phase6.mjs",
+    "db:migrate": "node --experimental-strip-types services/api/src/phase6/migrate.ts",
+    "test:db": "node --experimental-strip-types --test tests/integration/*.test.mjs"
   },
   "engines": {
     "node": ">=20"

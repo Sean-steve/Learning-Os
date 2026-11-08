@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {recordChanged} from '../phase6/cloud-sync';
 import type { ChangeEvent } from 'react';
 import { AudioLines, Bookmark, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, FileAudio2, FileText, Headphones, Link2, Pause, Play, Plus, RefreshCw, ShieldCheck, Trash2, UploadCloud, Volume2, Youtube } from 'lucide-react';
 import { addBookmark, emptyMediaState, isSafeExternalUrl, MEDIA_STORAGE_KEY, normalizedProgress, parseYouTubeEmbed, readMediaState, stableTextId, upsertProgress } from './media-core';
@@ -16,7 +17,8 @@ const percent = (value: number) => `${Math.max(0, Math.min(100, value))}%`;
 export default function MediaStudio({ sources, notify }: MediaStudioProps) {
   const [tab, setTab] = useState<MediaTab>('video');
   const [state, setState] = useState<MediaState>(() => { try { return readMediaState(localStorage.getItem(MEDIA_STORAGE_KEY)); } catch { return emptyMediaState(); } });
-  useEffect(() => { try { localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(state)); } catch { /* private storage mode */ } }, [state]);
+  useEffect(() => { try { localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(state));recordChanged(MEDIA_STORAGE_KEY); } catch { /* private storage mode */ } }, [state]);
+  useEffect(()=>{const hydrate=()=>{try{setState(readMediaState(localStorage.getItem(MEDIA_STORAGE_KEY)))}catch{/* ignore */}};window.addEventListener('los:cloud-hydrate',hydrate);return()=>window.removeEventListener('los:cloud-hydrate',hydrate)},[]);
   useEffect(() => {
     const onStorage = (event: StorageEvent) => { if (event.key === MEDIA_STORAGE_KEY) setState(readMediaState(event.newValue)); };
     window.addEventListener('storage', onStorage); return () => window.removeEventListener('storage', onStorage);

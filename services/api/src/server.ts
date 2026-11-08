@@ -3,6 +3,8 @@ import { createPlan } from '../../../packages/learning-core/src/index.ts';
 import { googleCalendarRoute } from './google-calendar.ts';
 import { aiAccountabilityRoute } from './accountability-ai.ts';
 import { masteryAiRoute } from './mastery-ai.ts';
+import {phase6Route} from './phase6/routes.ts';
+import {pool} from './phase6/db.ts';
 import type { LearningPlan, PlanInput } from '../../../packages/learning-core/src/index.ts';
 
 const port=Number(process.env.API_PORT||3005);
@@ -49,12 +51,13 @@ async function aiReview(plan:LearningPlan,excerptList:unknown):Promise<{stageGui
 }
 Bun.serve({port,hostname,async fetch(req,server){
   const path=new URL(req.url).pathname;
+  if(path.startsWith('/v1/auth/')||path.startsWith('/v1/records')) return phase6Route(req,{db:pool,origin,secure:origin.startsWith('https:'),ip:server.requestIP(req)?.address||'local'});
   if(path.startsWith('/v1/google/')) return googleCalendarRoute(req);
   if(path==='/v1/accountability/ai-review') return aiAccountabilityRoute(req,{origin,hostname,apiKey,model});
   if(path==='/v1/mastery/ai-review') return masteryAiRoute(req,{origin,hostname,apiKey,model});
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
-  if(req.method==='GET'&&path==='/health')return response({ok:true,service:'learning-os-api',phase:5,persistence:false,aiConfigured:Boolean(apiKey)});
-  if(req.method==='GET'&&path==='/v1/meta')return response({name:'Learning OS',version:'0.2.0',mode:'local-first',aiConfigured:Boolean(apiKey),persistence:'browser-only'});
+  if(req.method==='GET'&&path==='/health'){try{await pool.query('SELECT 1');return response({ok:true,service:'learning-os-api',phase:6,persistence:true,database:'connected',aiConfigured:Boolean(apiKey)})}catch{return response({ok:false,service:'learning-os-api',phase:6,database:'unavailable'},503)}}
+  if(req.method==='GET'&&path==='/v1/meta')return response({name:'Learning OS',version:'0.6.0',mode:'postgres-local-first',aiConfigured:Boolean(apiKey),persistence:'postgresql-authenticated'});
   if(req.method!=='POST')return error('not_found',404);
   if(path!=='/v1/plans/ai-generate')return error('not_found',404);
   if(req.headers.get('origin')&&req.headers.get('origin')!==origin)return error('forbidden_origin',403);

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import {recordChanged} from '../phase6/cloud-sync';
 import type { FormEvent } from 'react';
 import { Bell, BookOpen, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Download, ExternalLink, Headphones, Moon, Plus, RefreshCw, ShieldCheck, Sparkles, Target, WandSparkles } from 'lucide-react';
 import { DEFAULT_RULES, accountability, coachingNote, googleCalendarUrl, icsCalendar, localDateTime, localDay, nextSafeSlot, validatePlacement } from '../../../../packages/scheduling-core/src/index';
@@ -31,7 +32,8 @@ const apiBase = String(import.meta.env.VITE_LEARNING_API_URL || 'http://localhos
 function IconMode({ mode }: { mode: LearningMode }) { return mode === 'listen' ? <Headphones size={16} /> : mode === 'read' ? <BookOpen size={16} /> : <Target size={16} />; }
 function useSettings(): [Settings, Setter<Settings>] {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  useEffect(() => { localStorage.setItem(KEY, JSON.stringify(settings)); }, [settings]);
+  useEffect(() => { localStorage.setItem(KEY, JSON.stringify(settings));recordChanged(KEY); }, [settings]);
+  useEffect(()=>{const hydrate=()=>setSettings(loadSettings());window.addEventListener('los:cloud-hydrate',hydrate);return()=>window.removeEventListener('los:cloud-hydrate',hydrate)},[]);
   useEffect(() => { const onChange = (event: StorageEvent) => { if (event.key === KEY) setSettings(loadSettings()); }; window.addEventListener('storage', onChange); return () => window.removeEventListener('storage', onChange); }, []);
   return [settings, setSettings];
 }
