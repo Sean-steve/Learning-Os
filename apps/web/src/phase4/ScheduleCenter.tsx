@@ -177,7 +177,7 @@ export default function ScheduleCenter({ sessions, setSessions, completed, toggl
     <button type="button" aria-label={'Mark ' + s.title + ' complete'} className="p4-check" onClick={()=>toggle(s.id)}>{completedSet.has(s.id)?<Check size={15}/>:<span/>}</button>
     <div className="p4-event-main"><strong>{s.title}</strong><small>{s.time} · {s.minutes} min · {s.mode} · {prettyDate(s.day)}</small></div>
     <div className="p4-event-actions"><button type="button" title="Find a new time" aria-label={'Reschedule '+s.title} onClick={()=>proposeMove(s)}><RefreshCw size={15}/></button>
-    <button type="button" title="Add to Google Calendar" aria-label={'Add '+s.title+' to Google Calendar'} onClick={()=>void syncOne(s)}><ExternalLink size={15}/></button>
+    {googleConnected&&localBackend()?<button type="button" title="Synchronize to connected Google Calendar" aria-label={'Sync '+s.title+' to Google Calendar'} onClick={()=>void syncOne(s)}><ExternalLink size={15}/></button>:<a href={googleCalendarUrl(s)} target="_blank" rel="noopener noreferrer" title="Open manual Google Calendar event" aria-label={'Add '+s.title+' to Google Calendar'}><ExternalLink size={15}/></a>}
     <button type="button" title="Remove local session" aria-label={'Remove '+s.title} onClick={()=>dropSession(s.id)}>×</button></div>
   </article>;
 
@@ -199,7 +199,7 @@ export default function ScheduleCenter({ sessions, setSessions, completed, toggl
         <div className="p4-week-days">{days.map(day=><button key={day} className={day===selectedDay?'selected':''} onClick={()=>setSelectedDay(day)}><small>{prettyDate(day)}</small><strong>{day.slice(-2)}</strong><span>{sessions.filter(s=>s.day===day).length} sessions</span></button>)}</div>
         <div className="p4-week-summary"><Clock3 size={17}/> {shown.length} learning sessions · {weekMinutes} min across displayed week</div>
         <div className="p4-events">{shown.length?shown.map(card):<p className="p4-empty">No sessions in this week. Add a 15-minute audio lesson to get started.</p>}</div>
-        {proposal&&<div className="p4-proposal" role="status"><b>Suggested adjustment · requires your approval</b><p>{proposal.title} → {prettyDate(proposal.day)}, {proposal.time}, {proposal.minutes} min</p><button className="btn btn-primary" onClick={acceptProposal}>Apply suggested time</button><button className="btn btn-outline" onClick={cancelProposal}>Keep original</button></div>}
+        {proposal&&!pendingNew&&<div className="p4-proposal" role="status"><b>Suggested adjustment · requires your approval</b><p>{proposal.title} → {prettyDate(proposal.day)}, {proposal.time}, {proposal.minutes} min</p><button className="btn btn-primary" onClick={acceptProposal}>Apply suggested time</button><button className="btn btn-outline" onClick={cancelProposal}>Keep original</button></div>}
       </section>
       <aside className="p4-side">
         <section className="surface-card p4-card"><div className="p4-section-head"><div><span>CALENDAR</span><h3>Google Calendar & exports</h3></div><CalendarDays size={20}/></div>

@@ -51,10 +51,9 @@ test('calendar file downloads without OAuth', async ({ page }) => {
 
 test('individual Google event can be opened without sharing credentials', async ({ page }) => {
   await page.goto('/#calendar');
-  await page.evaluate(()=>{(window as any).__eventLinks=[];window.open=(url:any)=>{(window as any).__eventLinks.push(String(url));return null as any;};});
-  await page.getByRole('button',{name:/Add .* to Google Calendar/}).first().click();
-  const links=await page.evaluate(()=>(window as any).__eventLinks as string[]);
-  expect(links[0]).toMatch(/^https:\/\/calendar\.google\.com\/calendar\/render\?/);
+  const link=page.getByRole('link',{name:/Add .* to Google Calendar/}).first();
+  await expect(link).toHaveAttribute('target','_blank');
+  expect(await link.getAttribute('href')).toMatch(/^https:\/\/calendar\.google\.com\/calendar\/render\?/);
 });
 
 test('accountability follows completed study sessions without harsh catchup', async ({ page }) => {
