@@ -1,0 +1,35 @@
+name: Learning OS — Phase 1 UI
+on:
+  push:
+    branches: [main, "phase/**"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Verify source imported
+        run: |
+          test -f package.json
+          test -f apps/web/src/App.tsx
+          test -f apps/web/src/styles.css
+          test -f scripts/check-phase1.mjs
+      - run: npm ci
+      - run: npm run check:phase1
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-os-ui-build
+          path: apps/web/dist/
+          if-no-files-found: error
