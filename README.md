@@ -126,3 +126,18 @@ npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+## Phase 4 — Smart Schedule, Google Calendar & Accountability
+
+The Schedule and Accountability screens now share a conflict-aware, sleep-safe, audio-first local planner, helpful check-ins, browser reminders while the tab is open, and optional `.ics`/manual Google Calendar event creation. All schedule editing requires explicit action. In a **local-only** Bun development session you can optionally connect your own Google OAuth client; secrets and tokens are never shipped to Pages. An optional AI accountability check-in sends only aggregate metrics and sleep ratings when requested. The GitHub Pages build has no active OAuth session or background notification worker.
+
+See [Phase 4 integration, privacy and tests](docs/PHASE-4-ENGINEERING.md).
+
+```bash
+npm ci
+npm run check:phase4
+npm run test:core
+npm run typecheck
+npm run build
+npm run dev
+```

@@ -1,0 +1,9 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { googleEventId, googleLocalMode, googlePayload, validateGoogleEvent } from '../../services/api/src/google-calendar-core.ts';
+const item={id:'p4-8b5bfa32',title:'Practice listening',start:'2026-11-09T17:30:00.000Z',end:'2026-11-09T18:00:00.000Z',mode:'listen',reminderMinutes:10};
+test('normalizes a valid private learning event',()=>{const x=validateGoogleEvent(item);const p=googlePayload(x,'losabc123');assert.equal(p.visibility,'private');assert.equal(p.reminders.overrides[0].minutes,10);assert.equal(p.extendedProperties.private.learningOsSessionId,item.id);});
+test('rejects excessive durations and invalid dates',()=>{assert.throws(()=>validateGoogleEvent({...item,end:'2026-11-10T18:00:00.000Z'}));assert.throws(()=>validateGoogleEvent({...item,start:'invalid'}));});
+test('rejects malicious identifiers and invalid reminder values',()=>{assert.throws(()=>validateGoogleEvent({...item,id:'../../etc/passwd'}));assert.throws(()=>validateGoogleEvent({...item,reminderMinutes:1000}));});
+test('Google IDs deterministic and alphabet compatible',async()=>{const a=await googleEventId(item.id);const b=await googleEventId(item.id);assert.equal(a,b);assert.match(a,/^[a-v0-9]{5,1024}$/);});
+test('OAuth unavailable unless loopback, local web and credentials explicitly enabled',()=>{const good={API_HOST:'127.0.0.1',WEB_ORIGIN:'http://localhost:5173',GOOGLE_REDIRECT_URI:'http://localhost:3005/v1/google/callback',GOOGLE_CALENDAR_LOCAL_ENABLED:'true',GOOGLE_CLIENT_ID:'test',GOOGLE_CLIENT_SECRET:'test'};assert.equal(googleLocalMode(good),true);assert.equal(googleLocalMode({...good,API_HOST:'0.0.0.0'}),false);assert.equal(googleLocalMode({...good,WEB_ORIGIN:'https://sean-steve.github.io'}),false);assert.equal(googleLocalMode({...good,GOOGLE_CALENDAR_LOCAL_ENABLED:'false'}),false);});
