@@ -18,7 +18,25 @@ export const listenCloud=(f:()=>void)=>{window.addEventListener('los:sync-state'
 function checksum(value:string){let h=2166136261;for(let i=0;i<value.length;i++)h=Math.imul(h^value.charCodeAt(i),16777619);return (h>>>0).toString(16)}
 async function api(path:string,init?:RequestInit){const res=await fetch(ORIGIN+path,{...init,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','X-Learning-Intent':'manual-sync',...init?.headers}}); const payload=await res.json().catch(()=>({error:'unexpected_response'}));if(!res.ok)throw new Error(payload.error||`http_${res.status}`);return payload;}
 export async function authMe():Promise<CloudUser|null>{if(!cloudAvailable())return null;const a=await api('/auth/me');return a.user||null}
-export async function createAccount(email:string,password:string,mode:'login'|'register'){const body=await api('/auth/'+mode,{method:'POST',body:JSON.stringify({email,password})}); state={...state,mode:'preview',user:body.user,error:''};publish();return body.user as CloudUser;}
+export async function createAccount(email:string,password:string,mode:'login'|'register'):Promise<CloudUser|{mfaRequired:true}>{
+  const body=await api('/auth/'+mode,{method:'POST',body:JSON.stringify({email,password})});
+  if(body.mfaRequired===true)return {mfaRequired:true};
+  state={...state,mode:'preview',user:body.user,error:''};publish();return body.user as CloudUser;
+}
+export async function finishMfaLogin(code:string):Promise<CloudUser>{
+  const result=await api('/auth/mfa/complete',{method:'POST',body:JSON.stringify({code})});
+  state={...state,mode:'preview',user:result.user,error:''};publish();return result.user as CloudUser;
+}
+export async function getMfaStatus():Promise<{enabled:boolean;configurationAvailable:boolean}>{
+  return api('/auth/mfa/status');
+}
+export async function startMfa(password:string):Promise<{secret:string;otpauth:string}>{
+  return api('/auth/mfa/begin',{method:'POST',body:JSON.stringify({password})});
+}
+export async function activateMfa(code:string):Promise<{enabled:boolean;recoveryCodes:string[]}>{
+  return api('/auth/mfa/activate',{method:'POST',body:JSON.stringify({code})});
+}
+
 export async function cloudRecords():Promise<CloudRecord[]>{const r=await api('/records');return r.records as CloudRecord[];}
 export type AccountSession={id:string;createdAt:string;expiresAt:string;current:boolean};
 export async function listAccountSessions():Promise<AccountSession[]>{

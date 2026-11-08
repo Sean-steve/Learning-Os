@@ -67,7 +67,7 @@ export function recoveryDigest(code:string):string {
   return tokenDigest('los-recovery-v1:'+norm);
 }
 export function mfaChallengeCookie(token:string,secure:boolean,expire=false):string {
-  return `los_mfa_challenge=${expire?'':token}; Path=/v1/auth/mfa; HttpOnly; SameSite=Strict; ${secure?'Secure; ':''}Max-Age=${expire?0:300}`;
+  return `los_mfa_challenge=${expire?'':token}; Path=/api/v1/auth/mfa; HttpOnly; SameSite=Strict; ${secure?'Secure; ':''}Max-Age=${expire?0:300}`;
 }
 export function challengeFromRequest(req:Request):string|null {
   const pair=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('los_mfa_challenge='));
