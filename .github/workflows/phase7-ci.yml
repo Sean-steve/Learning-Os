@@ -1,0 +1,74 @@
+name: Learning OS — Phase 7 Security and Cross-Device Certification
+on:
+  push:
+    branches: ["phase/7-security-sync-production-certification"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  postgres-and-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: los_ci
+          POSTGRES_PASSWORD: los_ci_private_test
+          POSTGRES_DB: learning_os_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U los_ci -d learning_os_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: true
+      MIGRATION_DATABASE_URL: postgres://los_ci:los_ci_private_test@127.0.0.1:5432/learning_os_test
+      DATABASE_URL: postgres://los_app_ci:los_app_ci_test_only@127.0.0.1:5432/learning_os_test
+      WEB_ORIGIN: http://127.0.0.1:5173
+      API_HOST: 127.0.0.1
+      API_PORT: 3005
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Validate scripts and security invariants
+        run: |
+          bash -n scripts/backup-encrypted.sh scripts/restore-scratch.sh
+          npm run check:phase7
+      - name: Unit, TypeScript and frontend build
+        run: npm run test:core && npm run typecheck && npm run build
+      - name: PostgreSQL migrations and user-isolation/security tests
+        run: npm run db:migrate && node scripts/provision-ci-role.mjs && npm run test:db
+      - name: Verify GitHub Pages remains safe and static
+        run: GITHUB_PAGES=true npm run build && node scripts/check-pages.mjs
+      - name: Start private test gateway against PostgreSQL
+        run: |
+          node --experimental-strip-types services/api/src/phase6/node-test-server.ts >/tmp/los-phase7-gateway.log 2>&1 &
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:3005/v1/auth/me >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3005/v1/auth/me
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Desktop/mobile complete browser suite including two devices
+        run: npx playwright test
+      - name: Show test API failure context
+        if: failure()
+        run: cat /tmp/los-phase7-gateway.log || true
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-os-phase7-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn

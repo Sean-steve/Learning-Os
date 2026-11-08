@@ -20,7 +20,6 @@ ProtectSystem=strict
 ProtectHome=true
 ProtectKernelTunables=true
 ProtectControlGroups=true
-ReadWritePaths=/var/log/learning-os
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 UMask=0077
 LimitNOFILE=4096
