@@ -13,9 +13,13 @@
     "build": "npm run build --workspace @learning-os/web",
     "typecheck": "npm run typecheck --workspace @learning-os/web",
     "preview": "npm run preview --workspace @learning-os/web",
-    "check:phase1": "node scripts/check-phase1.mjs"
+    "check:phase1": "node scripts/check-phase1.mjs",
+    "test:e2e": "playwright test"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
   }
 }
