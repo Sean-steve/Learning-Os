@@ -1,7 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {generateTotpSecret,totpAt,verifyTotp,encryptSecret,decryptSecret,newRecoveryCodes,recoveryDigest,normalizeRecovery,mfaChallengeCookie} from '../../services/api/src/phase71/mfa-core.ts';
-const old=process.env.MFA_ENCRYPTION_KEY;
 process.env.MFA_ENCRYPTION_KEY='1'.repeat(64);
 test('TOTP generator and verifier match step, tolerance and deny replays',()=>{
   const secret=generateTotpSecret();assert.match(secret,/^[A-Z2-7]{32}$/);
@@ -27,4 +26,3 @@ test('temporary MFA challenge cookie is HttpOnly and tightly scoped',()=>{
   assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);
   assert.match(cookie,/SameSite=Strict/);assert.match(cookie,/Path=\/api\/v1\/auth\/mfa/);
 });
-process.env.MFA_ENCRYPTION_KEY=old;
