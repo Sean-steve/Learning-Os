@@ -36,3 +36,15 @@ test('mobile dashboard has no major horizontal overflow', async ({page, isMobile
   const viewport=await page.evaluate(()=>document.documentElement.clientWidth);
   expect(width).toBeLessThanOrEqual(viewport + 4);
 });
+
+test('capture visual certification evidence', async ({page}, testInfo) => {
+  for(const route of ['overview','library','calendar','analytics']) {
+    await page.goto('/#' + route, {waitUntil:'domcontentloaded'});
+    await expect(page.locator('main h1').first()).toBeVisible();
+    await page.screenshot({
+      path:testInfo.outputPath(route+'-'+testInfo.project.name+'.png'),
+      fullPage:true,
+      animations:'disabled'
+    });
+  }
+});
