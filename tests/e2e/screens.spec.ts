@@ -59,3 +59,68 @@ test('goal builder saves a new goal in local storage', async ({ page }) => {
   await expect(page).toHaveURL(/#goals$/);
   await expect(page.getByText('Learn conversational Swahili')).toBeVisible();
 });
+
+test('knowledge source can be added, filtered, and revisited', async ({ page }) => {
+  await page.goto('/#library');
+  await page.getByRole('button', { name: /Add learning source/ }).click();
+  await page.getByPlaceholder('e.g. Dream awareness workshop').fill('Sample learning source');
+  await page.getByPlaceholder('https://...').fill('https://example.org/lesson');
+  await page.getByRole('button', { name: /Save source/ }).click();
+  await expect(page.getByText('Sample learning source')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Sample learning source')).toBeVisible();
+});
+
+test('calendar session can be created and checked off', async ({ page }) => {
+  await page.goto('/#calendar');
+  await page.getByRole('button', { name: /Add study session/ }).click();
+  await page.getByPlaceholder('e.g. Listen: lucid dream foundations').fill('Practice listening session');
+  await page.getByRole('button', { name: /Add session/ }).click();
+  await expect(page.getByText('Practice listening session')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Practice listening session')).toBeVisible();
+});
+
+test('audio queue changes track and records completion', async ({ page }) => {
+  await page.goto('/#audio');
+  await expect(page.locator('.audio-hero h2')).toContainText('remembering dreams');
+  await page.getByRole('button', { name: 'Next track' }).click();
+  await expect(page.locator('.audio-hero h2')).toContainText('Mindfulness');
+  await page.getByRole('button', { name: 'Mark lesson complete' }).first().click();
+  await page.reload();
+  await expect(page.locator('.audio-hero h2')).toContainText('remembering dreams');
+});
+
+test('reader opens a local PDF without uploading it', async ({ page }) => {
+  await page.goto('/#reader');
+  const buffer = Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 0/Kids[]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n');
+  await page.locator('input[type="file"]').setInputFiles({ name: 'local-preview.pdf', mimeType: 'application/pdf', buffer });
+  await expect(page.getByText('local-preview.pdf')).toBeVisible();
+  await expect(page.locator('iframe[title="Locally opened PDF"]')).toBeVisible();
+});
+
+test('focus session can be started and paused', async ({ page }) => {
+  await page.goto('/#focus');
+  await page.getByRole('button', { name: /Start focusing/ }).click();
+  await expect(page.getByRole('button', { name: /Pause session/ })).toBeVisible();
+  await page.getByRole('button', { name: /Pause session/ }).click();
+  await expect(page.getByRole('button', { name: /Start focusing/ })).toBeVisible();
+});
+
+test('lesson notes persist between page reloads', async ({ page }) => {
+  await page.goto('/#lesson');
+  await page.getByRole('button', { name: 'Notes', exact: true }).click();
+  await page.getByPlaceholder('What stood out? What will you practice?').fill('Practice recall before reading.');
+  await page.reload();
+  await page.getByRole('button', { name: 'Notes', exact: true }).click();
+  await expect(page.getByPlaceholder('What stood out? What will you practice?')).toHaveValue('Practice recall before reading.');
+});
+
+test('assessment can be answered and scored', async ({ page }) => {
+  await page.goto('/#assessments');
+  await page.getByRole('button', { name: /Remain still and reconstruct the dream/ }).click();
+  await page.getByRole('button', { name: /Consistently recorded dream recall/ }).click();
+  await page.getByRole('button', { name: /To separate claims and provenance from evidence/ }).click();
+  await page.getByRole('button', { name: /Submit assessment/ }).click();
+  await expect(page.getByText('3 / 3 correct')).toBeVisible();
+});
