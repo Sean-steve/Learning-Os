@@ -1,0 +1,25 @@
+{
+  "name": "learning-os",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/web",
+    "services/api",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @learning-os/web",
+    "dev:api": "bun --watch services/api/src/server.ts",
+    "build": "npm run build --workspace @learning-os/web",
+    "typecheck": "npm run typecheck --workspace @learning-os/web",
+    "preview": "npm run preview --workspace @learning-os/web",
+    "check:phase1": "node scripts/check-phase1.mjs",
+    "test:e2e": "playwright test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}

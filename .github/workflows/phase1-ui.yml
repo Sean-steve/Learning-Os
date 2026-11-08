@@ -1,0 +1,45 @@
+name: Learning OS — Phase 1 UI
+on:
+  push:
+    branches: [main, "phase/**"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Verify source imported
+        run: |
+          test -f package-lock.json
+          test -f package.json
+          test -f apps/web/src/App.tsx
+          test -f apps/web/src/styles.css
+          test -f scripts/check-phase1.mjs
+          test -f tests/e2e/screens.spec.ts
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check:phase1
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run 18-screen UI smoke tests
+        run: npm run test:e2e
+      - name: Upload UI test and build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-os-phase1-ui-evidence-${{ github.run_id }}
+          path: |
+            apps/web/dist/
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
