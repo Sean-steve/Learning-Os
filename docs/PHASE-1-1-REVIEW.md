@@ -1,31 +1,33 @@
-# Learning OS — Phase 1.1 Repository and UI Certification
+# Learning OS — Phase 1.1 Repository, Build and UI Certification
 
-Date: 2026-11-08
+**Date:** 2026-11-08
+**Repository:** https://github.com/Sean-steve/Learning-Os
+**Branch:** `phase/1.1-repository-certification`
 
 ## Delivered
-- Repository: `Sean-steve/Learning-Os`
-- Default branch initialized: `main`
-- Review branch: `phase/1.1-repository-certification`
-- Original 18-view React/TypeScript UI source imported from the Phase 1 ZIP.
-- TypeScript/Bun API foundation and contracts imported.
-- Responsive preview, source documentation and integration stubs imported.
-- GitHub Actions workflow for structural, typecheck, Vite build and Playwright browser testing.
-- Dedicated Playwright test suite for 18 routes, desktop/mobile viewport checks and browser exceptions.
+- GitHub repo initialized with protected feature-branch review workflow.
+- Full original Phase 1 source imported: 18 navigable UI routes, responsive design, demo data, local state and TypeScript/Bun API stub.
+- CI workflow: Node 22 dependency installation, structure check, typecheck, production build, Bun health smoke, Playwright desktop/mobile.
+- UI evidence screenshots: dashboard, library, calendar, analytics at desktop and mobile sizes.
+- Functional e2e: source library save/persist, journal save/persist, preferences toggle/persist.
+- Original preview and engineering notes included.
 
-## Evidence
-- Local static validator: **PASS**
-- Standalone TypeScript TSX syntax transpilation: **0 errors**
-- npm registry access locally: **FAILED** (DNS sandbox block)
-- Dependency-backed typecheck: **PENDING GitHub Actions**
-- Production build: **PENDING GitHub Actions**
-- Browser e2e: **PENDING GitHub Actions**
-- Full visual/manual accessibility audit: **PENDING**
+## Verified result
+**GitHub Actions:** PASS — https://github.com/Sean-steve/Learning-Os/actions/runs/42462274209
 
-## Release gate
-Do not merge to `main` unless CI is green and manual UI smoke review is complete.
-Do not confuse 18 routes present in source with 18 routes fully certified.
+- 47 browser tests passed.
+- 1 expected skip (mobile-only overflow check does not run for desktop).
+- Real TypeScript typechecking and Vite production build passed.
+- Bun API health and metadata endpoints passed.
+- Sampled visual screenshots show coherent responsive layout.
 
-## Test on Ubuntu
+## Certification boundary
+This certifies Phase 1's **frontend implementation and demo interaction flows**, not production readiness.
+Phase 1 still uses browser-local storage. AI, PostgreSQL, Google Calendar, reminders, authentication and HOS engine communication remain later-phase features.
+
+Manual accessibility review and any visual adjustments should be completed before merging to main.
+
+## Run locally (Ubuntu)
 ```bash
 git clone https://github.com/Sean-steve/Learning-Os.git
 cd Learning-Os
@@ -36,16 +38,20 @@ npm run typecheck
 npm run build
 npm run dev
 ```
+Open http://localhost:5173
 
-For browser tests:
+To run local browser tests:
 ```bash
 npm install --no-save --no-package-lock @playwright/test@^1.56.0
 npx playwright install chromium
 npx playwright test
 ```
 
-## Known functional boundaries
-Phase 1 provides browser-local demo interactions. AI inference, PostgreSQL persistence, reminder delivery, Google Calendar sync and HOS interoperability are **future-phase integrations**, not delivered systems.
+Run the backend separately after installing Bun:
+```bash
+npm run dev:api
+```
+API health: http://localhost:3005/health
 
-## Next decision
-When all certification gates pass, merge the PR; then begin Phase 2: AI curriculum generation and source management.
+## Merge rule
+Do not merge until manual PR review is completed. Phase 2 begins after Phase 1.1 acceptance.
