@@ -19,6 +19,9 @@ jobs:
       - run: npm run check:phase1 && npm run check:phase2 && npm run test:core
       - run: npm run typecheck
       - run: npm run build
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify private Bun API health and no-key guard
+        run: bash tests/api-health.sh
       - run: GITHUB_PAGES=true npm run build && node scripts/check-pages.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

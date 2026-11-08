@@ -91,3 +91,24 @@ npm run test:e2e
 
 The UI still uses demo lessons and browser-local data. Postgres, AI and Calendar
 app integration belong to later phases.
+
+## Phase 2 — Knowledge and Intelligent Planning
+
+- Generate 30/60/90/180-day curricula with an audio-first split, rest days and milestone gates.
+- Paste transcripts or import local text-based PDFs; linked-only media is never treated as analyzed.
+- Save adaptive learning programs in browser-local storage. Actual backend persistence comes later.
+- Optional Bun API offers AI stage and weekly curriculum enhancement with `OPENAI_API_KEY` server-side.
+- See [Phase 2 Engineering Notes](docs/PHASE-2-ENGINEERING.md).
+
+**GitHub Pages:** Vite is configured for `/Learning-Os/` and an Actions deployment runs on `main`.
+If this is the repository's first Pages release, select **Settings → Pages → Source → GitHub Actions** once.
+
+```bash
+npm ci
+npm run check:phase2
+npm run test:core
+npm run typecheck
+npm run build
+npm run dev
+# Optional private server: OPENAI_API_KEY=... bun services/api/src/server.ts
+```
