@@ -25,7 +25,8 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgres://los_ci:los_ci_private_test@127.0.0.1:5432/learning_os_test
+      MIGRATION_DATABASE_URL: postgres://los_ci:los_ci_private_test@127.0.0.1:5432/learning_os_test
+      DATABASE_URL: postgres://los_app_ci:los_app_ci_test_only@127.0.0.1:5432/learning_os_test
       WEB_ORIGIN: http://127.0.0.1:5173
       API_HOST: 127.0.0.1
       API_PORT: 3005
@@ -39,7 +40,7 @@ jobs:
       - name: Source, prior unit and auth cryptography tests
         run: npm run check:phase1 && npm run check:phase2 && npm run check:phase3 && npm run check:phase4 && npm run check:phase5 && npm run check:phase6 && npm run test:core
       - name: PostgreSQL schema and auth/tenant integration tests
-        run: npm run db:migrate && npm run test:db
+        run: npm run db:migrate && node scripts/provision-ci-role.mjs && npm run test:db
       - run: npm run typecheck
       - run: npm run build
       - name: Verify production Pages asset paths
