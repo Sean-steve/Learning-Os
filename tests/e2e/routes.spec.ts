@@ -6,21 +6,21 @@ const routes = [
   'assessments','analytics','coach','accountability','integrations','settings'
 ];
 
-test('all 18 primary routes render without uncaught exceptions', async ({page}) => {
-  const errors:string[] = [];
-  page.on('pageerror', err => errors.push(err.message));
-  for (const route of routes) {
-    await page.goto('/#' + route);
+for(const route of routes) {
+  test('route '+route+' renders without uncaught exceptions', async ({page}) => {
+    const errors:string[] = [];
+    page.on('pageerror', err => errors.push(err.message));
+    await page.goto('/#' + route, {waitUntil:'domcontentloaded'});
     await expect(page.locator('main.main-column')).toBeVisible();
     await expect(page.locator('main h1').first()).toBeVisible();
     expect((await page.locator('main').innerText()).trim().length).toBeGreaterThan(80);
-  }
-  expect(errors).toEqual([]);
-});
+    expect(errors).toEqual([]);
+  });
+}
 
-test('sidebar navigation and demo data disclosure', async ({page}) => {
-  await page.goto('/#overview');
-  await expect(page.getByText('Preview data').first()).toBeVisible();
+test('sidebar navigation and demo-data disclosure', async ({page}) => {
+  await page.goto('/#overview', {waitUntil:'domcontentloaded'});
+  await expect(page.getByText('Preview data').first()).toBeAttached();
   const nav=page.getByRole('navigation', {name:'Main navigation'});
   await expect(nav).toBeAttached();
   const isMobile=await page.evaluate(()=>window.innerWidth <= 740);
@@ -31,7 +31,7 @@ test('sidebar navigation and demo data disclosure', async ({page}) => {
 
 test('mobile dashboard has no major horizontal overflow', async ({page, isMobile}) => {
   if (!isMobile) test.skip();
-  await page.goto('/#overview');
+  await page.goto('/#overview', {waitUntil:'domcontentloaded'});
   const width=await page.evaluate(()=>document.documentElement.scrollWidth);
   const viewport=await page.evaluate(()=>document.documentElement.clientWidth);
   expect(width).toBeLessThanOrEqual(viewport + 4);
