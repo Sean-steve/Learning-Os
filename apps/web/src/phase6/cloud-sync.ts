@@ -41,7 +41,7 @@ export async function activateCloud(user:CloudUser,mode:'import'|'restore') {
   revisions=v;hashes={};for(const key of SYNC_KEYS){const raw=localStorage.getItem(key);if(raw!==null)hashes[key]=checksum(raw);}
   pending.clear();conflicts.clear();active=true;
   localStorage.setItem(OWNER,user.id);localStorage.setItem(ENABLED,'1');persistMeta();
-  state={mode:'active',user,pending:0,conflicts:[],error:''};publish();
+  state={mode:'connecting',user,pending:0,conflicts:[],error:''};publish();
   // Hooks are browser-local; reload to initialize all screens against restored state.
   location.reload();
 }
@@ -65,7 +65,13 @@ async function refreshRemote(){
   }
   persistMeta();publish();
 }
-export async function resumeCloud() {
+let recovery:Promise<void>|null=null;
+export async function resumeCloud():Promise<void> {
+  if(recovery)return recovery;
+  recovery=resumeCloudOnce();
+  try { await recovery; } finally { recovery=null; }
+}
+async function resumeCloudOnce() {
   if(!cloudAvailable()||!localStorage.getItem(ENABLED))return;
   state={...state,mode:'connecting'};publish();
   try{
@@ -73,11 +79,12 @@ export async function resumeCloud() {
     if(!user){clearLocal();state={mode:'preview',user:null,pending:0,conflicts:[],error:'Signed out; local account cache cleared.'};publish();location.reload();return;}
     if(localStorage.getItem(OWNER)!==user.id){clearLocal();state={mode:'preview',user,pending:0,conflicts:[],error:'Account changed; previous local data cleared.'};publish();location.reload();return;}
     revisions=read(VERSIONS,{});hashes=read(HASHES,{});
-    active=true;state={mode:'active',user,pending:0,conflicts:[],error:''};publish();
+    active=true;state={mode:'connecting',user,pending:0,conflicts:[],error:''};publish();
     await refreshRemote();
     // Recover edits made during a temporary offline period or before authentication finished.
     // Conflicting remote edits remain blocked for explicit human resolution.
     for(const key of SYNC_KEYS){if(!conflicts.has(key))recordChanged(key);}
+    state={...state,mode:conflicts.size?'conflict':'active',error:''};publish();
   }catch(e){state={...state,mode:'offline',error:'Backend unreachable. Changes remain in this browser.'};publish()}
 }
 export function isCloudActive(){return active;}
