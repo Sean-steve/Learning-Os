@@ -2,7 +2,8 @@ import pg from 'pg';
 import type { PoolClient } from 'pg';
 import { validateRecord, parseRevision } from './core.ts';
 const { Pool }=pg;
-export const pool = new Pool({connectionString: process.env.DATABASE_URL || 'postgres://learning_os:learning_os_local@127.0.0.1:5432/learning_os',max:10, connectionTimeoutMillis:4000, idleTimeoutMillis:10_000});
+if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL must be explicitly configured; no built-in database password is permitted.');
+export const pool = new Pool({connectionString: process.env.DATABASE_URL,max:10, connectionTimeoutMillis:4000, idleTimeoutMillis:10_000});
 export type DB = InstanceType<typeof Pool>;
 export async function withUser<T>(db:DB,userId:string,operation:(client:PoolClient)=>Promise<T>):Promise<T> {
   const client=await db.connect();

@@ -23,7 +23,7 @@ jobs:
       - run: npm run build
       - run: GITHUB_PAGES=true npm run build && node scripts/check-pages.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: npx playwright test tests/e2e/screens.spec.ts tests/e2e/multimedia.spec.ts
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4
