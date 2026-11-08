@@ -1,0 +1,10 @@
+import {existsSync,readFileSync} from 'node:fs';
+const required=['services/api/migrations/001_phase6.sql','services/api/src/phase6/auth.ts','services/api/src/phase6/records.ts','services/api/src/phase6/routes.ts','services/api/src/phase6/db.ts','apps/web/src/phase6/CloudAccount.tsx','apps/web/src/phase6/cloud-sync.ts','tests/integration/postgres-auth.test.mjs','docs/PHASE-6-ENGINEERING.md'];
+for(const p of required)if(!existsSync(p))throw Error('Missing Phase 6 file: '+p);
+const read=p=>readFileSync(p,'utf8');
+const app=read('apps/web/src/App.tsx'),server=read('services/api/src/server.ts'),vite=read('apps/web/vite.config.ts');
+for(const marker of ["case 'account'",'CloudAccount','CloudStartup','recordChanged'])if(!app.includes(marker))throw Error('Frontend sync missing: '+marker);
+for(const marker of ['phase6Route','/v1/records','pool'])if(!server.includes(marker))throw Error('Backend sync missing: '+marker);
+if(!vite.includes("'/api'"))throw Error('Same-origin API proxy not configured');
+if(!read('services/api/migrations/001_phase6.sql').includes('FORCE ROW LEVEL SECURITY'))throw Error('RLS guard missing');
+console.log('Phase 6 structural certification PASS');
